@@ -6,6 +6,14 @@
  */
 
 /**
+ * @缓存控制常量
+ */
+var CACHE	= {
+	READ	: 1,
+	WRITE	: 2,
+};
+
+/**
  * @完整机器列表
  */
 var server	= [];
@@ -29,14 +37,11 @@ var offline	= {};
  * @请求参数
  */
 var option	= {
-	'username'	: '',
-	'timeout'	: 30,
+	'uname'	: '',							/**<	请求用户名	*/
+	'tmout'	: 30,							/**<	请求超时	*/
+	'cache'	: CACHE.READ | CACHE.WRITE,		/**<	缓存控制	*/
 };
 
-/* {{{ function update_online_list() */
-/**
- * 更新可用机器列表
- */
 function update_online_list() {
 	var ok	= [];
 	var tm	= (new Date()).getTime();
@@ -50,9 +55,7 @@ function update_online_list() {
 
 	online	= ok;
 }
-/* }}} */
 
-/* {{{ function select_one_host() */
 function select_one_host() {
 	if (!online.length) {
 		update_online_list();
@@ -64,7 +67,9 @@ function select_one_host() {
 
 	return server[(request++) % online.length];
 }
-/* }}} */
+
+function post_http_request() {
+}
 
 var ITier	= function () {
 	if (!(this instanceof ITier)) {
@@ -77,15 +82,16 @@ var ITier	= function () {
  * 执行query
  *
  * @access public
+ * callback: error, data, option
  */
 ITier.prototype.query	= function (sql, data, callback) {
 	var server	= select_one_host();
 	if (!server) {
-		callback('[1000] ', null);
+		callback('[1000] EmptyOnlineHost', null, null);
 		return;
 	}
 
-
+	post_http_request('http://' + server);
 }
 /* }}} */
 
@@ -115,5 +121,6 @@ ITier.prototype.option	= function (key, val) {
 }
 /* }}} */
 
+exports.CACHE	= CACHE;
 exports.init	= ITier;
 
