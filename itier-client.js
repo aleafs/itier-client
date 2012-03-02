@@ -1,4 +1,9 @@
 /* vim: set expandtab tabstop=2 shiftwidth=2 foldmethod=marker: */
+/**
+ * itier-client : Library for client to co communicate with itier
+ * Copyright(c) 2003 - 2012 Taobao.com
+ * @author: zhangxc83@gmail.com
+ */
 
 /**
  * @完整机器列表
@@ -110,7 +115,5 @@ ITier.prototype.option	= function (key, val) {
 }
 /* }}} */
 
-exports.instance	= function () {
-	return new ITier;
-}
+exports.init	= ITier;
 
