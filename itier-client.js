@@ -16,27 +16,27 @@ var CACHE	= {
 /**
  * @完整机器列表
  */
-var server	= [];
+var SERVERS	= [];
 
 /**
  * @可用机器列表
  */
-var online	= [];
+var ONLINES	= [];
 
 /**
  * @请求计数
  */
-var request	= 0;
+var REQUEST	= 0;
 
 /**
  * @不可用机器
  */
-var offline	= {};
+var OFFLINE	= {};
 
 /**
  * @请求参数
  */
-var option	= {
+var OPTIONS	= {
 	'uname'	: '',							/**<	请求用户名	*/
 	'tmout'	: 30,							/**<	请求超时	*/
 	'cache'	: CACHE.READ | CACHE.WRITE,		/**<	缓存控制	*/
@@ -45,30 +45,27 @@ var option	= {
 function update_online_list() {
 	var ok	= [];
 	var tm	= (new Date()).getTime();
-	for (var i = 0; i < server.length; i++) {
-		var url	= server[i];
-		if (!offline[url] || offline[url] < tm) {
-			ok.push(server[i]);
-			delete offline[url];
+	for (var i = 0; i < SERVERS.length; i++) {
+		var url	= SERVERS[i];
+		if (!OFFLINE[url] || OFFLINE[url] < tm) {
+			ok.push(SERVERS[i]);
+			delete OFFLINE[url];
 		}
 	}
 
-	online	= ok;
+	ONLINES	= ok;
 }
 
 function select_one_host() {
-	if (!online.length) {
+	if (!ONLINES.length) {
 		update_online_list();
 	}
 
-	if (!online.length) {
+	if (!ONLINES.length) {
 		return false;
 	}
 
-	return server[(request++) % online.length];
-}
-
-function post_http_request() {
+	return ONLINES[(REQUEST++) % ONLINES.length];
 }
 
 var ITier	= function () {
@@ -87,11 +84,29 @@ var ITier	= function () {
 ITier.prototype.query	= function (sql, data, callback) {
 	var server	= select_one_host();
 	if (!server) {
-		callback('[1000] EmptyOnlineHost', null, null);
+		callback('[1000] Empty Online Host', null, null);
 		return;
 	}
 
-	post_http_request('http://' + server);
+	var http	= require('http');
+	var itier	= http.request({
+		'host'		: '127.0.0.1',
+		'port'		: 33750,
+		'path'		: '',
+		'method'	: 'POST',
+	}, function(res) {
+		console.log(itier);
+	});
+
+	itier.setTimeout(OPTIONS.tmout, function() {
+		callback('[1100] Request timeout after ' + OPTIONS.tmout + ' second(s)', null, null);
+	});
+
+	itier.on('error', function(err) {
+		callback('[2100] server throw error as "' + err + '"', null, null);
+	});
+
+	itier.end();
 }
 /* }}} */
 
@@ -103,7 +118,7 @@ ITier.prototype.query	= function (sql, data, callback) {
  * @return this
  */
 ITier.prototype.server	= function (host) {
-	server.push(host);
+	SERVERS.push(host);
 	return this;
 }
 /* }}} */
@@ -116,7 +131,7 @@ ITier.prototype.server	= function (host) {
  * @return this
  */
 ITier.prototype.option	= function (key, val) {
-	option[key]	= val;
+	OPTIONS[key] = val;
 	return this;
 }
 /* }}} */
