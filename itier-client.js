@@ -5,6 +5,9 @@
  * @author: zhangxc83@gmail.com
  */
 
+var HTTP	= require('http');
+var QUERY	= require('querystring');
+
 /**
  * @缓存控制常量
  */
@@ -24,6 +27,11 @@ var SERVERS	= [];
 var ONLINES	= [];
 
 /**
+ * @备用机器列表
+ */
+var BACKEND	= [];
+
+/**
  * @请求计数
  */
 var REQUEST	= 0;
@@ -33,32 +41,61 @@ var REQUEST	= 0;
  */
 var OFFLINE	= {};
 
+/* {{{ function get_server_string() */
 /**
- * @请求参数
+ * 构造请求host
+ *
+ * @access private
+ * @return string
  */
-var OPTIONS	= {
-	'uname'	: '',							/**<	请求用户名	*/
-	'tmout'	: 30,							/**<	请求超时	*/
-	'cache'	: CACHE.READ | CACHE.WRITE,		/**<	缓存控制	*/
-};
+function get_server_string(obj) {
+	return obj.host + ':' + obj.port;
+}
+/* }}} */
 
-function update_online_list() {
-	var ok	= [];
-	var tm	= (new Date()).getTime();
+/* {{{ function update_online_list() */
+/**
+ * 更新在线机器列表
+ *
+ * @access private
+ * @return void
+ */
+function update_online_list(obj) {
+	var now	= (new Date()).getTime();
+	var end	= '/sql?' + QUERY.stringify(obj.config);
+
+	var run	= [];
 	for (var i = 0; i < SERVERS.length; i++) {
-		var url	= SERVERS[i];
-		if (!OFFLINE[url] || OFFLINE[url] < tm) {
-			ok.push(SERVERS[i]);
-			delete OFFLINE[url];
+		var cfg	= SERVERS[i];
+		var idx	= get_server_string(cfg);
+		if (!OFFLINE[idx] || OFFLINE[idx] < now) {
+			run.push({
+				'url'	: 'http://' + idx + end,
+				'opt'	: {
+					'host'		: cfg.host,
+					'port'		: cfg.port,
+					'path'		: end,
+					'method'	: 'POST',
+				},
+			});
+			delete OFFLINE[idx];
 		}
 	}
 
-	ONLINES	= ok;
+	ONLINES	= run;
 }
+/* }}} */
 
-function select_one_host() {
+/* {{{ function select_one_host() */
+/**
+ * 选择一台服务器
+ *
+ * @access private
+ * @return Object
+ */
+function select_one_host(obj) {
 	if (!ONLINES.length) {
-		update_online_list();
+		update_online_list(obj);
 	}
 
 	if (!ONLINES.length) {
@@ -67,10 +104,18 @@ function select_one_host() {
 
 	return ONLINES[(REQUEST++) % ONLINES.length];
 }
+/* }}} */
 
-var ITier	= function () {
-	if (!(this instanceof ITier)) {
-		return new ITier;
+var ITier	= function (config) {
+
+	this.config	= {
+		'version'	: '1.0',
+		'timeout'	: 30,
+		'usecache'	: CACHE.READ | CACHE.WRITE,
+	};
+
+	for (var key in config) {
+		this.config[key] = config[key];
 	}
 }
 
@@ -79,34 +124,27 @@ var ITier	= function () {
  * 执行query
  *
  * @access public
- * callback: error, data, option
+ * callback: error, data, header
  */
 ITier.prototype.query	= function (sql, data, callback) {
-	var server	= select_one_host();
-	if (!server) {
-		callback('[1000] Empty Online Host', null, null);
+	var who	= select_one_host(this);
+	if (!who || !who.url || !who.opt) {
+		callback('[1000] Empty Online Host');
 		return;
 	}
 
-	var http	= require('http');
-	var itier	= http.request({
-		'host'		: '127.0.0.1',
-		'port'		: 33750,
-		'path'		: '',
-		'method'	: 'POST',
-	}, function(res) {
-		console.log(itier);
+	var req	= HTTP.request(who.opt, function(res) {
 	});
 
-	itier.setTimeout(OPTIONS.tmout, function() {
-		callback('[1100] Request timeout after ' + OPTIONS.tmout + ' second(s)', null, null);
+	req.setTimeout(this.config.timeout, function() {
+		callback('[1100] Request timeout for "' + who.url + '"');
 	});
 
-	itier.on('error', function(err) {
-		callback('[2100] server throw error as "' + err + '"', null, null);
+	req.on('error', function(err) {
+		callback('[2100] server throw error as "' + err + '"');
 	});
 
-	itier.end();
+	req.end(/* 写入SQL */);
 }
 /* }}} */
 
@@ -117,25 +155,17 @@ ITier.prototype.query	= function (sql, data, callback) {
  * @access public
  * @return this
  */
-ITier.prototype.server	= function (host) {
-	SERVERS.push(host);
-	return this;
-}
-/* }}} */
-
-/* {{{ prototype option() */
-/**
- * 设置请求参数
- *
- * @access public
- * @return this
- */
-ITier.prototype.option	= function (key, val) {
-	OPTIONS[key] = val;
+ITier.prototype.server	= function (host, port) {
+	SERVERS.push({
+		'host'	: host,
+		'port'	: port ? parseInt(port) : 80,
+	});
 	return this;
 }
 /* }}} */
 
 exports.CACHE	= CACHE;
-exports.init	= ITier;
+exports.init	= function(config) {
+	return new ITier(config);
+}
 
