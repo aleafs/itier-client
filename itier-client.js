@@ -53,6 +53,18 @@ function get_server_string(obj) {
 }
 /* }}} */
 
+/* {{{ function push_to_offline() */
+/**
+ * 投入OFFLINE列表
+ *
+ * @access private
+ * @return void
+ */
+function push_to_offline(key, off) {
+	OFFLINE[key]	= (new Date()).getTime() + (off ? 1000 * parseInt(off) : 300000);
+}
+/* }}} */
+
 /* {{{ function update_online_list() */
 /**
  * 更新在线机器列表
@@ -70,6 +82,7 @@ function update_online_list(obj) {
 		var idx	= get_server_string(cfg);
 		if (!OFFLINE[idx] || OFFLINE[idx] < now) {
 			run.push({
+				'idx'	: idx,
 				'url'	: 'http://' + idx + end,
 				'opt'	: {
 					'host'		: cfg.host,
@@ -129,19 +142,23 @@ var ITier	= function (config) {
 ITier.prototype.query	= function (sql, data, callback) {
 	var who	= select_one_host(this);
 	if (!who || !who.url || !who.opt) {
-		callback('[1000] Empty Online Host');
+		callback('[1000] Empty online servers list for itier.');
 		return;
 	}
 
 	var req	= HTTP.request(who.opt, function(res) {
+		// xxx:
 	});
 
-	req.setTimeout(this.config.timeout, function() {
-		callback('[1100] Request timeout for "' + who.url + '"');
+	req.setTimeout(this.config.timeout + 1, function() {
+		callback('[1100] Request timeout for ' + who.url);
 	});
 
 	req.on('error', function(err) {
-		callback('[2100] server throw error as "' + err + '"');
+		if ('ECONNREFUSED' == err.code) {
+			push_to_offline(who.idx);
+		}
+		callback('[1200] ' + err + ' for ' + who.url);
 	});
 
 	req.end(/* 写入SQL */);
@@ -155,11 +172,28 @@ ITier.prototype.query	= function (sql, data, callback) {
  * @access public
  * @return this
  */
-ITier.prototype.server	= function (host, port) {
+ITier.prototype.server	= function(host, port) {
 	SERVERS.push({
 		'host'	: host,
 		'port'	: port ? parseInt(port) : 80,
 	});
+	return this;
+}
+/* }}} */
+
+/* {{{ prototype removeAll() */
+/**
+ * 清理所有数据
+ *
+ * @access public
+ * @return this
+ */
+ITier.prototype.removeAll	= function() {
+	SERVERS	= [];
+	ONLINES	= [];
+	BACKEND	= [];
+	OFFLINE	= {};
+	REQUEST	= 0;
 	return this;
 }
 /* }}} */
