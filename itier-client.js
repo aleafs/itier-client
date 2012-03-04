@@ -147,10 +147,14 @@ ITier.prototype.query	= function (sql, data, callback) {
 	}
 
 	var req	= HTTP.request(who.opt, function(res) {
-		// xxx:
+		//console.log(res.headers);
+		//console.log(res.statusCode);
+		res.on('data', function(chunk) {
+			console.log(chunk.toString());
+		});
 	});
 
-	req.setTimeout(this.config.timeout + 1, function() {
+	req.setTimeout(1000 * (this.config.timeout + 1), function() {
 		callback('[1100] Request timeout for ' + who.url);
 	});
 
@@ -160,8 +164,7 @@ ITier.prototype.query	= function (sql, data, callback) {
 		}
 		callback('[1200] ' + err + ' for ' + who.url);
 	});
-
-	req.end(/* 写入SQL */);
+	req.end('aa'/* 写入SQL */);
 }
 /* }}} */
 
@@ -199,7 +202,7 @@ ITier.prototype.removeAll	= function() {
 /* }}} */
 
 exports.CACHE	= CACHE;
-exports.init	= function(config) {
+exports.create	= function(config) {
 	return new ITier(config);
 }
 
