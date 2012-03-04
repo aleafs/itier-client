@@ -15,7 +15,7 @@ var LiveBox	= function(name) {
 	/**
 	 * @请求计数器
 	 */
-	this.requests	= 0;
+	this.request	= 0;
 
 	/**
 	 * @所有服务器
@@ -28,30 +28,83 @@ var LiveBox	= function(name) {
 	this.onlines	= [];
 
 	/**
-	 * @备用列表
-	 */
-	this.backend	= [];
-	
-	/**
 	 * @下线列表
 	 */
 	this.offline	= {};
 
 }
 
-LiveBox.prototype.push	= function() {
-}
+/* {{{ private function update_online_list() */
+/**
+ * 更新online列表
+ */
+function update_online_list(obj) {
+	var tmp	= [];
+	var now	= (new Date()).getTime();
+	for (var i = 0; i < obj.servers.length; i++) {
+		var _me	= obj.servers[i];
+		if (!obj.offline[_me.idx] || now >= obj.offline[_me.idx]) {
+			tmp.push(_me.cfg);
+			delete obj.offline[_me.idx];
+		}
+	}
 
+	obj.onlines	= tmp;
+}
+/* }}} */
+
+/* {{{ public prototype push() */
+/**
+ * 注册一个选择对象
+ */
+LiveBox.prototype.push	= function(idx, config) {
+	this.onlines	= [];
+	this.servers.push({
+		'idx'	: idx,
+		'cfg'	: config,
+	});
+
+	return this;
+}
+/* }}} */
+
+/* {{{ public prototype fetch() */
+/**
+ * 选择一个对象
+ */
 LiveBox.prototype.fetch	= function() {
-}
+	if (!this.onlines || !this.onlines.length) {
+		update_online_list(this);
+	}
 
-LiveBox.prototype.pause	= function() {
+	if (!this.onlines.length) {
+		return false;
+	}
+
+	return this.onlines[(this.request++) % this.onlines.length];
 }
+/* }}} */
+
+/* {{{ public prototype pause() */
+/**
+ * 暂停某个对象的取出
+ */
+LiveBox.prototype.pause	= function(idx, off) {
+	this.onlines	= [];
+	this.offline[idx]	= (new Date()).getTime() + 1000 * (off ? parseInt(off) : 60);
+	return this;
+}
+/* }}} */
 
 /**
  * @单例模式，存放已经注册的对象
  */
 var __livebox_instances	= {};
+
+exports.removeAll	= function() {
+	__livebox_instances	= {};
+}
+
 exports.instance	= function(idx) {
 	idx	= idx.toString().toLowerCase();
 	if (!__livebox_instances[idx]) {
