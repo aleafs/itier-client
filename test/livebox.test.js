@@ -16,7 +16,7 @@ describe('livebox-test', function() {
 		LiveBox.instance('id1').request.should.eql(0);
 	});
 
-	it('should_load_balance_works_fine', function() {
+	it('should_load_balance_works_fine', function(done) {
 		LiveBox.removeAll();
 
 		var box	= LiveBox.instance('aa');
@@ -29,6 +29,10 @@ describe('livebox-test', function() {
 		box.pause('i_am_not_exists').pause('k2', 1);
 		box.fetch().should.eql('c1');
 		box.fetch().should.eql('c1');
-		box.fetch().should.eql('c1');
+
+		setTimeout(function() {
+			box.fetch().should.eql({c2 :'c2'});
+			done();
+		}, 1100);
 	});
 });
