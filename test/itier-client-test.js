@@ -23,7 +23,7 @@ describe('itier-client-test', function() {
 
 	it('should_push_into_offline_when_connect_refused', function(done) {
 		itier.removeAll().server('127.0.0.1').query('blabla', null, function(error, data) {
-			console.log('a' + error);
+			console.log(error);
 			done();
 		});
 	});

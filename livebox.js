@@ -96,6 +96,21 @@ LiveBox.prototype.pause	= function(idx, off) {
 }
 /* }}} */
 
+/* {{{ public prototype walk() */
+/**
+ * 对所有对象执行操作
+ */
+LiveBox.prototype.walk	= function(callback, exclude) {
+	for (var i = 0; i < this.servers.length; i++) {
+		var obj	= this.servers[i];
+		if (obj.idx === exclude) {
+			continue;
+		}
+		callback(obj.cfg, obj.idx);
+	}
+}
+/* }}} */
+
 /**
  * @单例模式，存放已经注册的对象
  */

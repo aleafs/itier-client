@@ -35,4 +35,22 @@ describe('livebox-test', function() {
 			done();
 		}, 1100);
 	});
+
+	it('shoud_livebox_walk_works_fine', function(done) {
+		LiveBox.removeAll();
+
+		var map	= [1, 2, 3, 4];
+		var box	= LiveBox.instance('aa');
+		for (var i = 0; i < map.length; i++) {
+			box.push(i, map[i]);
+		}
+
+		var max	= 3;
+		box.pause(1).walk(function(cfg, idx) {
+			cfg.should.eql(idx + 1);
+			if (!(--max)) {
+				done();
+			}
+		}, 1);
+	});
 });
