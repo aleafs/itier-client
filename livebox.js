@@ -101,14 +101,31 @@ LiveBox.prototype.pause	= function(idx, off) {
  */
 var __livebox_instances	= {};
 
+/**
+ * @offline检查定时器
+ */
+var __timer_for_offline	= null;
+
 exports.removeAll	= function() {
 	__livebox_instances	= {};
+	if (__timer_for_offline) {
+		clearInterval(__timer_for_offline);
+		__timer_for_offline	= null;
+	}
 }
 
 exports.instance	= function(idx) {
 	idx	= idx.toString().toLowerCase();
 	if (!__livebox_instances[idx]) {
 		__livebox_instances[idx] = new LiveBox(idx);
+	}
+
+	if (!__timer_for_offline) {
+		__timer_for_offline	= setInterval(function() {
+			for (var i in __livebox_instances) {
+				update_online_list(__livebox_instances[i]);
+			}
+		}, 1000);
 	}
 
 	return __livebox_instances[idx];
