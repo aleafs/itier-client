@@ -3,13 +3,28 @@
 var should	= require('should');
 var ITier	= require(__dirname + '/../itier-client.js');
 
-var HTTP	= require('http').createServer(function(req, res) {
-	req.on('data', function(buf) {
-		console.log(buf.toString());
-	});
+var QS		= require('querystring');
 
-	res.writeHead(200, {'Content-Type' : 'text/plain'});
-	res.end(req.url);
+var HTTP	= require('http').createServer(function(req, res) {
+	if (req.headers['x-app-name'] == 'denied') {
+		res.writeHead(401, {'WWW-Authenticate' : 'Basic realm="."'});
+		res.end();
+		return;
+	}
+
+	var body	= '';
+	req.on('data', function(buf) {
+		body	+= buf.toString();
+	});
+	req.on('end', function() {
+		var _me	= QS.parse(body);
+		res.writeHead(200, {'Content-Type' : 'text/plain'});
+		res.end(QS.stringify({
+			'status'	: 0,
+			'message'	: 'OK',
+			'query'	: _me.__SQL__,
+		}));
+	});
 }).listen(33750);
 
 describe('itier-client-test', function() {
@@ -25,18 +40,25 @@ describe('itier-client-test', function() {
 	});
 	/* }}} */
 
-	it('should__', function(done) {
+	/* {{{ should_right_package_works_fine() */
+	it('should_right_package_works_fine', function(done) {
 		var itier	= ITier.init();
 		itier.removeAll().server('127.0.0.1', 33750).on('error', function(error) {
 			error.should.eql('', 'Unexpected error occurred');
 		});
 
 		itier.on('complete', function(data, header) {
+			QS.parse(data.toString()).should.eql({
+				'status'	: '0',
+				'message'	: 'OK',
+				'query'		: 'SELECT * FROM myfox.table_info',
+			});
 			done();
 		});
 
-		itier.query('blabla');
+		itier.query('SELECT * FROM myfox.table_info');
 	});
+	/* }}} */
 
 	/* {{{ should_push_into_offline_and_relive_works_fine() */
 	it('should_push_into_offline_and_relive_works_fine', function(done) {

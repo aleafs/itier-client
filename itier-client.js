@@ -97,16 +97,18 @@ function update_online_list() {
 	for (var i = 0; i < SERVERS.length; i++) {
 		var cfg	= SERVERS[i];
 		var idx	= get_server_string(cfg);
+		var opt	= {
+			'host'		: cfg.host,
+			'port'		: cfg.port,
+			'path'		: end,
+			'method'	: 'POST',
+			'headers'	: {'x-app-name' : __USER, 'x-app-pass' : __PASS},
+		};
 		if (!OFFLINE[idx] || OFFLINE[idx] < now) {
 			run.push({
 				'idx'	: idx,
 				'url'	: 'http://' + idx + end,
-				'opt'	: {
-					'host'		: cfg.host,
-					'port'		: cfg.port,
-					'path'		: end,
-					'method'	: 'POST',
-				},
+				'opt'	: opt,
 			});
 			delete OFFLINE[idx];
 		}
@@ -136,10 +138,19 @@ function select_one_host() {
 }
 /* }}} */
 
+var __USER	= '';
+var __PASS	= '';
 var ITier	= function (user, pass, config) {
 
 	if (!(this instanceof ITier)) {
 		return new ITier(user, pass, config);
+	}
+
+	if (user) {
+		__USER	= user;
+	}
+	if (pass) {
+		__PASS	= pass;
 	}
 
 	for (var key in config) {
@@ -196,8 +207,8 @@ ITier.prototype.query	= function (sql, data) {
 		_me.emit('error', '[1200] ' + err + ' for ' + who.url);
 	});
 	req.end(QUERY.stringify({
-		's' : sql,
-		'v' : data,
+		'__SQL__' : sql,
+		'__VAR__' : data,
 	}));
 }
 /* }}} */
