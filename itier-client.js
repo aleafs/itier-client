@@ -168,9 +168,21 @@ ITier.prototype.query	= function (sql, data) {
 	}
 
 	var req	= HTTP.request(who.opt, function(res) {
+		var chunks	= [];
+		var length	= 0;
 		res.on('data', function(chunk) {
-			console.log(chunk.toString());
+			chunks.push(chunk);
+			length += chunk.length;
 		});
+
+		res.on('end', function() {
+			var ret	= new Buffer(length);
+			for (var i = 0, p = 0; i < chunks.length; i++) {
+				chunks[i].copy(ret, p);
+				p	+= chunks[i].length;
+			}
+			_me.emit('complete', ret);
+		})
 	});
 
 	req.setTimeout(1000 * (CONFIG.timeout + 1), function() {
@@ -183,7 +195,10 @@ ITier.prototype.query	= function (sql, data) {
 		}
 		_me.emit('error', '[1200] ' + err + ' for ' + who.url);
 	});
-	req.end(/* 写入SQL */);
+	req.end(QUERY.stringify({
+		's' : sql,
+		'v' : data,
+	}));
 }
 /* }}} */
 
