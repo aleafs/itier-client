@@ -18,12 +18,17 @@ var HTTP	= require('http').createServer(function(req, res) {
 	});
 	req.on('end', function() {
 		var _me	= QS.parse(body);
+
+		var ret	= JSON.stringify([{'c1':1,'c2':2},{'c1':3,'c2':4}]);
+		var prf	= JSON.stringify([{'sql':_me.__SQL__,'title':'aa'}]);
 		res.writeHead(200, {
 			'Content-Type'	: 'text/plain',
 			'X-App-Status'	: 0,
-			'X-app-Message'	: 'OK',
+			'X-App-datalen'	: ret.length,
+			'X-app-cache'	: 329,
 		});
-		res.end(_me.__SQL__);
+
+		res.end(ret + prf);
 	});
 }).listen(33750);
 
@@ -47,12 +52,16 @@ describe('itier-client-test', function() {
 			error.should.eql('', 'Unexpected error occurred');
 		});
 
-		itier.on('complete', function(data, header) {
-			data.toString().should.eql('SELECT * FROM myfox.table_info');
-			header.should.eql({
-				'status'	: '0',
-				'message'	: 'OK',
-			});
+		itier.on('complete', function(data, header, profile) {
+			data.should.eql([{'c1':1,'c2':2},{'c1':3,'c2':4}]);
+			profile.should.eql([{
+				'sql'	: 'SELECT * FROM myfox.table_info',
+				'title'	: 'aa',
+			}]);
+
+			header.cache.should.eql('329');
+			header.should.have.property('status');
+			header.should.have.property('datalen');
 			done();
 		});
 
@@ -89,7 +98,7 @@ describe('itier-client-test', function() {
 						error.should.include('1200] Error: connect ECONNREFUSED for http://127.0.0.1:80');
 						done();
 					});
-				
+
 					itier.query('test for offline relive');
 				}, 1100);
 			});

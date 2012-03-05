@@ -138,6 +138,15 @@ function select_one_host() {
 }
 /* }}} */
 
+/* {{{ private parse_response_data() */
+/**
+ * 解析数据包
+ */
+function parse_response_data(buf) {
+	return JSON.parse(buf);
+}
+/* }}} */
+
 var __USER	= '';
 var __PASS	= '';
 var ITier	= function (user, pass, config) {
@@ -180,35 +189,33 @@ ITier.prototype.query	= function (sql, data) {
 	}
 
 	var req	= HTTP.request(who.opt, function(res) {
-		var chunks	= [];
-		var length	= 0;
+		var buffer	= '';
 		res.on('data', function(buf) {
-			chunks.push(buf);
-			length	+= buf.length;
+			buffer	+= buf;
 		});
 		res.on('end', function() {
-			var ret	= new Buffer(length);
-			for (var i = 0, p = 0; i < chunks.length; i++) {
-				chunks[i].copy(ret, p);
-				p += chunks[i].length;
-			}
-
-			if (200 != res.statusCode) {
-				_me.emit('error', '[2000] ' + ret.toString());
-				return;
-			}
-
-			var sta	= {};
+			var header	= {};
 			for (var idx in res.headers) {
 				var val	= res.headers[idx];
 				var idx	= idx.toLowerCase();
 				var pos = idx.indexOf('x-app-');
 				if (pos >= 0) {
-					sta[idx.slice(pos + 6)]	= val;
+					header[idx.slice(pos + 6)] = val;
 				}
 			}
 
-			_me.emit('complete', ret, sta);
+			if (200 != res.statusCode || '0' != header['status']) {
+				_me.emit('error', '[2000] ' + buffer);
+				return;
+			}
+
+			var profile	= null;
+			if (header.datalen) {
+				profile	= buffer.slice(header.datalen);
+				buffer	= buffer.slice(0, header.datalen);
+			}
+
+			_me.emit('complete', parse_response_data(buffer), header, parse_response_data(profile));
 		})
 	});
 
