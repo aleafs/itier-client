@@ -16,14 +16,14 @@ describe('itier-client-test', function() {
 
 	it('should_throw_error_when_empty_online_server_list', function(done) {
 		itier.removeAll().query('blabla', null, function(error, data) {
-			error.should.eql('[1000] Empty online servers list for itier.');
+			error.should.include('[1000] Empty online servers list for itier');
 			done();
 		});
 	});
 
 	it('should_push_into_offline_when_connect_refused', function(done) {
 		itier.removeAll().server('127.0.0.1').query('blabla', null, function(error, data) {
-			console.log(error);
+			error.should.include('1200] Error: connect ECONNREFUSED for http://127.0.0.1:80');
 			done();
 		});
 	});

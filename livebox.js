@@ -44,7 +44,7 @@ function update_online_list(obj) {
 	for (var i = 0; i < obj.servers.length; i++) {
 		var _me	= obj.servers[i];
 		if (!obj.offline[_me.idx] || now >= obj.offline[_me.idx]) {
-			tmp.push(_me.cfg);
+			tmp.push(_me.obj);
 			delete obj.offline[_me.idx];
 		}
 	}
@@ -57,11 +57,11 @@ function update_online_list(obj) {
 /**
  * 注册一个选择对象
  */
-LiveBox.prototype.push	= function(idx, config) {
+LiveBox.prototype.push	= function(obj, idx) {
 	this.onlines	= [];
 	this.servers.push({
-		'idx'	: idx,
-		'cfg'	: config,
+		'idx'	: idx ? idx : this.servers.length,
+		'obj'	: obj,
 	});
 
 	return this;
@@ -106,7 +106,7 @@ LiveBox.prototype.walk	= function(callback, exclude) {
 		if (obj.idx === exclude) {
 			continue;
 		}
-		callback(obj.cfg, obj.idx);
+		callback(obj.obj, obj.idx);
 	}
 }
 /* }}} */
@@ -117,12 +117,18 @@ LiveBox.prototype.walk	= function(callback, exclude) {
 var __livebox_instances	= {};
 
 /**
+ * @实例个数
+ */
+var __livebox_instant_c	= 0;
+
+/**
  * @offline检查定时器
  */
 var __timer_for_offline	= null;
 
 exports.removeAll	= function() {
 	__livebox_instances	= {};
+	__livebox_instant_c	= 0;
 	if (__timer_for_offline) {
 		clearInterval(__timer_for_offline);
 		__timer_for_offline	= null;
@@ -130,9 +136,15 @@ exports.removeAll	= function() {
 }
 
 exports.instance	= function(idx) {
-	idx	= idx.toString().toLowerCase();
+	if ('string' == (typeof idx)) {
+		idx	= idx.toLowerCase();
+	} else {
+		idx	= 'I_' + __livebox_instant_c;
+	}
+
 	if (!__livebox_instances[idx]) {
 		__livebox_instances[idx] = new LiveBox(idx);
+		__livebox_instant_c++;
 	}
 
 	if (!__timer_for_offline) {

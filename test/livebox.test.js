@@ -22,7 +22,7 @@ describe('livebox-test', function() {
 		var box	= LiveBox.instance('aa');
 		box.fetch().should.eql(false);
 
-		box.push(1, 'c1').push('k2', {c2: 'c2'}).fetch().should.eql('c1');
+		box.push('c1', 1).push({c2: 'c2'}, 'k2').fetch().should.eql('c1');
 		box.fetch().should.eql({c2: 'c2'});
 		box.fetch().should.eql('c1');
 
@@ -40,9 +40,9 @@ describe('livebox-test', function() {
 		LiveBox.removeAll();
 
 		var map	= [1, 2, 3, 4];
-		var box	= LiveBox.instance('aa');
+		var box	= LiveBox.instance();
 		for (var i = 0; i < map.length; i++) {
-			box.push(i, map[i]);
+			box.push(map[i]);
 		}
 
 		var max	= 3;
