@@ -18,12 +18,12 @@ var HTTP	= require('http').createServer(function(req, res) {
 	});
 	req.on('end', function() {
 		var _me	= QS.parse(body);
-		res.writeHead(200, {'Content-Type' : 'text/plain'});
-		res.end(QS.stringify({
-			'status'	: 0,
-			'message'	: 'OK',
-			'query'	: _me.__SQL__,
-		}));
+		res.writeHead(200, {
+			'Content-Type'	: 'text/plain',
+			'X-App-Status'	: 0,
+			'X-app-Message'	: 'OK',
+		});
+		res.end(_me.__SQL__);
 	});
 }).listen(33750);
 
@@ -48,10 +48,10 @@ describe('itier-client-test', function() {
 		});
 
 		itier.on('complete', function(data, header) {
-			QS.parse(data.toString()).should.eql({
+			data.toString().should.eql('SELECT * FROM myfox.table_info');
+			header.should.eql({
 				'status'	: '0',
 				'message'	: 'OK',
-				'query'		: 'SELECT * FROM myfox.table_info',
 			});
 			done();
 		});

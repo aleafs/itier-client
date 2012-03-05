@@ -179,15 +179,29 @@ ITier.prototype.query	= function (sql, data) {
 	}
 
 	var req	= HTTP.request(who.opt, function(res) {
-		var buffer	= '';
-		res.setEncoding('utf-8');
-		res.on('data', function(chunk) {
-			buffer	+= chunk;
+		var chunks	= [];
+		var length	= 0;
+		res.on('data', function(buf) {
+			chunks.push(buf);
+			length	+= buf.length;
 		});
-
 		res.on('end', function() {
-			var ret	= buffer;
-			_me.emit('complete', ret);
+			var ret	= new Buffer(length);
+			for (var i = 0, p = 0; i < chunks.length; i++) {
+				chunks[i].copy(ret, p);
+				p += chunks[i].length;
+			}
+
+			var sta	= {};
+			for (var idx in res.headers) {
+				var val	= res.headers[idx];
+				var idx	= idx.toLowerCase();
+				var pos = idx.indexOf('x-app-');
+				if (pos >= 0) {
+					sta[idx.slice(pos + 6)]	= val;
+				}
+			}
+			_me.emit('complete', ret, sta);
 		})
 	});
 
