@@ -158,6 +158,7 @@ var ITier	= function (user, pass, config) {
 	}
 
 	Events.EventEmitter.call(this);
+	this.removeAll();
 }
 
 Util.inherits(ITier, Events.EventEmitter);
@@ -192,6 +193,11 @@ ITier.prototype.query	= function (sql, data) {
 				p += chunks[i].length;
 			}
 
+			if (200 != res.statusCode) {
+				_me.emit('error', '[2000] ' + ret.toString());
+				return;
+			}
+
 			var sta	= {};
 			for (var idx in res.headers) {
 				var val	= res.headers[idx];
@@ -201,6 +207,7 @@ ITier.prototype.query	= function (sql, data) {
 					sta[idx.slice(pos + 6)]	= val;
 				}
 			}
+
 			_me.emit('complete', ret, sta);
 		})
 	});

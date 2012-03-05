@@ -8,7 +8,7 @@ var QS		= require('querystring');
 var HTTP	= require('http').createServer(function(req, res) {
 	if (req.headers['x-app-name'] == 'denied') {
 		res.writeHead(401, {'WWW-Authenticate' : 'Basic realm="."'});
-		res.end();
+		res.end('Authenticate denied for "' + req.headers['x-app-name'] + '"');
 		return;
 	}
 
@@ -40,8 +40,8 @@ describe('itier-client-test', function() {
 	});
 	/* }}} */
 
-	/* {{{ should_right_package_works_fine() */
-	it('should_right_package_works_fine', function(done) {
+	/* {{{ should_select_data_from_itier_works_fine() */
+	it('should_select_data_from_itier_works_fine', function(done) {
 		var itier	= ITier.init();
 		itier.removeAll().server('127.0.0.1', 33750).on('error', function(error) {
 			error.should.eql('', 'Unexpected error occurred');
@@ -57,6 +57,17 @@ describe('itier-client-test', function() {
 		});
 
 		itier.query('SELECT * FROM myfox.table_info');
+	});
+	/* }}} */
+
+	/* {{{ should_appname_authorize_works_fine() */
+	it('should_appname_authorize_works_fine', function(done) {
+		var itier	= ITier.init('denied');
+		itier.server('127.0.0.1', 33750).on('error', function(error) {
+			error.should.include('[2000] Authenticate denied for "denied"');
+			done();
+		});
+		itier.query('SHOW TABLES');
 	});
 	/* }}} */
 
