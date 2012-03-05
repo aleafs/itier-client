@@ -27,7 +27,7 @@ var Client	= function(config) {
 	/**
 	 * @服务选择器
 	 */
-	this.online	= require(__dirname + '/livebox.js').instance();
+	this.server	= require(__dirname + '/livebox.js').instance();
 
 	/**
 	 * @集成事件
@@ -42,7 +42,8 @@ Util.inherits(Client, Events.EventEmitter);
  * 添加机器
  */
 Client.prototype.add	= function(host, port) {
-	this.online.push({'host' : host, 'port' : port});
+	this.server.push({'host' : host, 'port' : port});
+	return this;
 }
 /* }}} */
 
@@ -51,7 +52,7 @@ Client.prototype.add	= function(host, port) {
  * 发起请求
  */
 Client.prototype.apply	= function(url, post) {
-	var obj	= this.online.fetch();
+	var obj	= this.server.fetch();
 	if (!obj) {
 		this.emit('error', '[1000] empty online server list');
 		return;
@@ -60,6 +61,25 @@ Client.prototype.apply	= function(url, post) {
 	if ('string' == (typeof url)) {
 		url	= URL.parse(url);
 	}
+
+	var option	= {
+		'host'	: obj.host,
+		'port'	: obj.port,
+		'path'	: this.config.prefix + '/' + url.path,
+		'method': url.method ? url.method : 'GET',
+	};
+
+	var _me	= this;
+	var req	= HTTP.request(option, function(res) {
+	
+	});
+	req.setTimeout(1000 * (this.config.timeout + 1), function() {
+		_me.emit('error', '[1100] Request timeout for ' + 'a');
+	});
+	req.on('error', function(err) {
+	
+	});
+	req.end();
 
 	console.log(url);
 	var data	= null;

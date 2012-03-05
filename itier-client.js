@@ -7,6 +7,8 @@
 
 var HTTP	= require('http');
 var QUERY	= require('querystring');
+var Events	= require('events');
+var Util	= require('util');
 
 /**
  * @缓存控制常量
@@ -131,6 +133,7 @@ var ITier	= function (config) {
 		this.config[key] = config[key];
 	}
 }
+Util.inherits(ITier, Events.EventEmitter);
 
 /* {{{ prototype query() */
 /**
@@ -139,10 +142,13 @@ var ITier	= function (config) {
  * @access public
  * callback: error, data, header
  */
-ITier.prototype.query	= function (sql, data, callback) {
-	var who	= select_one_host(this);
+ITier.prototype.query	= function (sql, data, cache) {
+	
+	var _me	= this;
+	var who	= select_one_host(_me);
+
 	if (!who || !who.url || !who.opt) {
-		callback('[1000] Empty online servers list for itier.');
+		_me.emit('error', '[1000] Empty online server list for itier.');
 		return;
 	}
 
@@ -155,14 +161,14 @@ ITier.prototype.query	= function (sql, data, callback) {
 	});
 
 	req.setTimeout(1000 * (this.config.timeout + 1), function() {
-		callback('[1100] Request timeout for ' + who.url);
+		_me.emit('error', '[1100] Request timeout for ' + who.url);
 	});
 
 	req.on('error', function(err) {
 		if ('ECONNREFUSED' == err.code) {
 			push_to_offline(who.idx);
 		}
-		callback('[1200] ' + err + ' for ' + who.url);
+		_me.emit('error', '[1200] ' + err + ' for ' + who.url);
 	});
 	req.end('aa'/* 写入SQL */);
 }

@@ -8,10 +8,6 @@ var HTTP	= require('http').createServer(function(req, res) {
 	res.end(req.url);
 }).listen(33750);
 
-before(function(done) {
-	setTimeout(done, 100);
-});
-
 describe('itier-client-test', function() {
 
 	it('should_throw_error_when_empty_online_server_list', function(done) {
