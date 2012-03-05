@@ -19,6 +19,15 @@ var CACHE	= {
 };
 
 /**
+ * @默认配置
+ */
+var CONFIG	= {
+	'version'	: '1.0',
+	'timeout'	: 30,
+	'usecache'	: CACHE.READ | CACHE.WRITE,
+};
+
+/**
  * @完整机器列表
  */
 var SERVERS	= [];
@@ -43,6 +52,11 @@ var REQUEST	= 0;
  */
 var OFFLINE	= {};
 
+/**
+ * @检查在线机器的定时器
+ */
+var __timer	= null;
+
 /* {{{ function get_server_string() */
 /**
  * 构造请求host
@@ -63,7 +77,8 @@ function get_server_string(obj) {
  * @return void
  */
 function push_to_offline(key, off) {
-	OFFLINE[key]	= (new Date()).getTime() + (off ? 1000 * parseInt(off) : 300000);
+	OFFLINE[key] = (new Date()).getTime() + (off ? 1000 * parseInt(off) : 300000);
+	ONLINES	= [];
 }
 /* }}} */
 
@@ -74,9 +89,9 @@ function push_to_offline(key, off) {
  * @access private
  * @return void
  */
-function update_online_list(obj) {
+function update_online_list() {
 	var now	= (new Date()).getTime();
-	var end	= '/sql?' + QUERY.stringify(obj.config);
+	var end	= '/sql?' + QUERY.stringify(CONFIG);
 
 	var run	= [];
 	for (var i = 0; i < SERVERS.length; i++) {
@@ -108,9 +123,9 @@ function update_online_list(obj) {
  * @access private
  * @return Object
  */
-function select_one_host(obj) {
+function select_one_host() {
 	if (!ONLINES.length) {
-		update_online_list(obj);
+		update_online_list();
 	}
 
 	if (!ONLINES.length) {
@@ -121,18 +136,19 @@ function select_one_host(obj) {
 }
 /* }}} */
 
-var ITier	= function (config) {
+var ITier	= function (user, pass, config) {
 
-	this.config	= {
-		'version'	: '1.0',
-		'timeout'	: 30,
-		'usecache'	: CACHE.READ | CACHE.WRITE,
-	};
+	if (!(this instanceof ITier)) {
+		return new ITier(user, pass, config);
+	}
 
 	for (var key in config) {
-		this.config[key] = config[key];
+		CONFIG[key] = config[key];
 	}
+
+	Events.EventEmitter.call(this);
 }
+
 Util.inherits(ITier, Events.EventEmitter);
 
 /* {{{ prototype query() */
@@ -142,35 +158,32 @@ Util.inherits(ITier, Events.EventEmitter);
  * @access public
  * callback: error, data, header
  */
-ITier.prototype.query	= function (sql, data, cache) {
+ITier.prototype.query	= function (sql, data) {
 	
 	var _me	= this;
 	var who	= select_one_host(_me);
-
 	if (!who || !who.url || !who.opt) {
 		_me.emit('error', '[1000] Empty online server list for itier.');
 		return;
 	}
 
 	var req	= HTTP.request(who.opt, function(res) {
-		//console.log(res.headers);
-		//console.log(res.statusCode);
 		res.on('data', function(chunk) {
 			console.log(chunk.toString());
 		});
 	});
 
-	req.setTimeout(1000 * (this.config.timeout + 1), function() {
+	req.setTimeout(1000 * (CONFIG.timeout + 1), function() {
 		_me.emit('error', '[1100] Request timeout for ' + who.url);
 	});
 
 	req.on('error', function(err) {
 		if ('ECONNREFUSED' == err.code) {
-			push_to_offline(who.idx);
+			push_to_offline(who.idx, 1);
 		}
 		_me.emit('error', '[1200] ' + err + ' for ' + who.url);
 	});
-	req.end('aa'/* 写入SQL */);
+	req.end(/* 写入SQL */);
 }
 /* }}} */
 
@@ -186,6 +199,11 @@ ITier.prototype.server	= function(host, port) {
 		'host'	: host,
 		'port'	: port ? parseInt(port) : 80,
 	});
+
+	if (!__timer) {
+		__timer	= setInterval(update_online_list, 1000);
+	}
+
 	return this;
 }
 /* }}} */
@@ -203,12 +221,17 @@ ITier.prototype.removeAll	= function() {
 	BACKEND	= [];
 	OFFLINE	= {};
 	REQUEST	= 0;
+
+	if (__timer) {
+		clearInterval(__timer);
+		__timer	= null;
+	}
 	return this;
 }
 /* }}} */
 
 exports.CACHE	= CACHE;
-exports.create	= function(config) {
-	return new ITier(config);
+exports.init	= function(user, pass, config) {
+	return ITier(user, pass, config);
 }
 

@@ -1,7 +1,7 @@
 /* vim: set expandtab tabstop=2 shiftwidth=2 foldmethod=marker: */
 
 var should	= require('should');
-var itier	= require(__dirname + '/../itier-client.js').create();
+var ITier	= require(__dirname + '/../itier-client.js');
 
 var HTTP	= require('http').createServer(function(req, res) {
 	res.writeHead(200, {'Content-Type' : 'text/plain'});
@@ -10,19 +10,45 @@ var HTTP	= require('http').createServer(function(req, res) {
 
 describe('itier-client-test', function() {
 
+	/* {{{ should_throw_error_when_empty_online_server_list() */
 	it('should_throw_error_when_empty_online_server_list', function(done) {
-		itier.removeAll().query('blabla', null, function(error, data) {
-			error.should.include('[1000] Empty online servers list for itier');
+		var itier	= ITier.init();
+		itier.removeAll().on('error', function(error) {
+			error.should.include('[1000] Empty online server list for itier');
 			done();
 		});
+		itier.query('blabla');
 	});
+	/* }}} */
 
-	it('should_push_into_offline_when_connect_refused', function(done) {
-		itier.removeAll().server('127.0.0.1').query('blabla', null, function(error, data) {
+	/* {{{ should_push_into_offline_and_relive_works_fine() */
+	it('should_push_into_offline_and_relive_works_fine', function(done) {
+		var itier	= ITier.init();
+		itier.removeAll().server('127.0.0.1').on('error', function(error) {
 			error.should.include('1200] Error: connect ECONNREFUSED for http://127.0.0.1:80');
-			done();
+			itier.removeAllListeners('error');
+			itier.on('error', function(error){
+				error.should.include('[1000] Empty online server list for itier');
+				itier.removeAllListeners('error');
+
+				/**
+				 * offline 1s
+				 */
+				setTimeout(function() {
+					itier.on('error', function(error) {
+						error.should.include('1200] Error: connect ECONNREFUSED for http://127.0.0.1:80');
+						done();
+					});
+				
+					itier.query('test for offline relive');
+				}, 1100);
+			});
+			itier.query('test for offline');
 		});
+		itier.query('blabla');
 	});
+	/* }}} */
+
 });
 
 after(function() {
