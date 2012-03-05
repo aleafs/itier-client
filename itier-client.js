@@ -179,19 +179,14 @@ ITier.prototype.query	= function (sql, data) {
 	}
 
 	var req	= HTTP.request(who.opt, function(res) {
-		var chunks	= [];
-		var length	= 0;
+		var buffer	= '';
+		res.setEncoding('utf-8');
 		res.on('data', function(chunk) {
-			chunks.push(chunk);
-			length += chunk.length;
+			buffer	+= chunk;
 		});
 
 		res.on('end', function() {
-			var ret	= new Buffer(length);
-			for (var i = 0, p = 0; i < chunks.length; i++) {
-				chunks[i].copy(ret, p);
-				p	+= chunks[i].length;
-			}
+			var ret	= buffer;
 			_me.emit('complete', ret);
 		})
 	});
