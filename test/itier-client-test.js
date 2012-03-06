@@ -48,7 +48,7 @@ describe('itier-client-test', function() {
 	/* {{{ should_select_data_from_itier_works_fine() */
 	it('should_select_data_from_itier_works_fine', function(done) {
 		var itier	= ITier.init();
-		itier.removeAll().server('127.0.0.1', 33750).on('error', function(error) {
+		itier.removeAll().connect('127.0.0.1', '', '', 33750).on('error', function(error) {
 			error.should.eql('', 'Unexpected error occurred');
 		});
 
@@ -71,8 +71,8 @@ describe('itier-client-test', function() {
 
 	/* {{{ should_appname_authorize_works_fine() */
 	it('should_appname_authorize_works_fine', function(done) {
-		var itier	= ITier.init('denied');
-		itier.server('127.0.0.1', 33750).on('error', function(error) {
+		var itier	= ITier.init();
+		itier.connect('127.0.0.1', 'denied', '', 33750).on('error', function(error) {
 			error.should.include('[2000] Authenticate denied for "denied"');
 			done();
 		});
@@ -83,8 +83,8 @@ describe('itier-client-test', function() {
 	/* {{{ should_push_into_offline_and_relive_works_fine() */
 	it('should_push_into_offline_and_relive_works_fine', function(done) {
 		var itier	= ITier.init();
-		itier.removeAll().server('127.0.0.1').on('error', function(error) {
-			error.should.include('1200] Error: connect ECONNREFUSED for http://127.0.0.1:80');
+		itier.removeAll().connect('127.0.0.1').on('error', function(error) {
+			error.should.include('1200] Error: connect ECONNREFUSED for http://127.0.0.1:9999');
 			itier.removeAllListeners('error');
 			itier.on('error', function(error){
 				error.should.include('[1000] Empty online server list for itier');
@@ -95,7 +95,7 @@ describe('itier-client-test', function() {
 				 */
 				setTimeout(function() {
 					itier.on('error', function(error) {
-						error.should.include('1200] Error: connect ECONNREFUSED for http://127.0.0.1:80');
+						error.should.include('1200] Error: connect ECONNREFUSED for http://127.0.0.1:9999');
 						done();
 					});
 

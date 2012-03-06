@@ -149,17 +149,10 @@ function parse_response_data(buf) {
 
 var __USER  = '';
 var __PASS  = '';
-var ITier  = function (user, pass, config) {
+var ITier	= function (config) {
 
   if (!(this instanceof ITier)) {
-    return new ITier(user, pass, config);
-  }
-
-  if (user) {
-    __USER  = user;
-  }
-  if (pass) {
-    __PASS  = pass;
+    return new ITier(config);
   }
 
   for (var key in config) {
@@ -189,16 +182,16 @@ ITier.prototype.query  = function (sql, data) {
   }
 
   var req  = HTTP.request(who.opt, function(res) {
-    var buffer  = '';
+    var buffer	= '';
     res.on('data', function(buf) {
-      buffer  += buf;
+      buffer += buf;
     });
     res.on('end', function() {
       var header  = {};
       for (var idx in res.headers) {
-        var val  = res.headers[idx];
-        var idx  = idx.toLowerCase();
-        var pos = idx.indexOf('x-app-');
+        var val = res.headers[idx];
+        var idx = idx.toLowerCase();
+        var pos	= idx.indexOf('x-app-');
         if (pos >= 0) {
           header[idx.slice(pos + 6)] = val;
         }
@@ -209,10 +202,10 @@ ITier.prototype.query  = function (sql, data) {
         return;
       }
 
-      var profile  = null;
+      var profile = null;
       if (header.datalen) {
-        profile  = buffer.slice(header.datalen);
-        buffer  = buffer.slice(0, header.datalen);
+        profile = buffer.slice(header.datalen);
+        buffer	= buffer.slice(0, header.datalen);
       }
 
       _me.emit('complete', parse_response_data(buffer), header, parse_response_data(profile));
@@ -236,18 +229,25 @@ ITier.prototype.query  = function (sql, data) {
 }
 /* }}} */
 
-/* {{{ prototype server() */
+/* {{{ prototype connect() */
 /**
  * 注册itier机器
  *
  * @access public
  * @return this
  */
-ITier.prototype.server  = function(host, port) {
+ITier.prototype.connect  = function(host, user, pass, port) {
   SERVERS.push({
     'host'  : host,
-    'port'  : port ? parseInt(port) : 80,
+    'port'  : port ? parseInt(port) : 9999,
   });
+
+  if (user) {
+    __USER  = user;
+  }
+  if (pass) {
+    __PASS  = pass;
+  }
 
   if (!__timer) {
     __timer  = setInterval(update_online_list, 1000);
@@ -280,7 +280,7 @@ ITier.prototype.removeAll  = function() {
 /* }}} */
 
 exports.CACHE  = CACHE;
-exports.init  = function(user, pass, config) {
-  return ITier(user, pass, config);
+exports.init  = function(config) {
+  return ITier(config);
 }
 
