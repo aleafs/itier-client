@@ -14,8 +14,8 @@ var Util	= require('util');
  * @缓存控制常量
  */
 var CACHE  = {
-  READ  : 1,
-  WRITE  : 2,
+  READ	: 1,
+  WRITE	: 2,
 };
 
 /**

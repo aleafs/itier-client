@@ -25,7 +25,7 @@ var HTTP	= require('http').createServer(function(req, res) {
 			'Content-Type'	: 'text/plain',
 			'X-App-Status'	: 0,
 			'X-App-datalen'	: ret.length,
-			'X-app-cache'	: 329,
+			'X-app-expire'	: 329,
 		});
 
 		res.end(ret + prf);
@@ -59,7 +59,7 @@ describe('itier-client-test', function() {
 				'title'	: 'aa',
 			}]);
 
-			header.cache.should.eql('329');
+			header.expire.should.eql('329');
 			header.should.have.property('status');
 			header.should.have.property('datalen');
 			done();

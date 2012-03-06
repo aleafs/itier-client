@@ -16,7 +16,7 @@ itier-client is a client library for itier
 			/**
 			  * @write to cache
 			  */
-			// cache.write(key, data, header.cache + now);
+			// cache.write(key, data, header.expire + now);
 		
 		});
 		itier.query('SELECT * FROM table WHERE c1 = :c', {
