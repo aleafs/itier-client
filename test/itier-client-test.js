@@ -48,7 +48,7 @@ describe('itier-client-test', function() {
 	/* {{{ should_select_data_from_itier_works_fine() */
 	it('should_select_data_from_itier_works_fine', function(done) {
 		var itier	= ITier.init();
-		itier.removeAll().connect('127.0.0.1', '', '', 33750).on('error', function(error) {
+		itier.removeAll().connect('127.0.0.1:33750').on('error', function(error) {
 			error.should.eql('', 'Unexpected error occurred');
 		});
 
@@ -72,7 +72,7 @@ describe('itier-client-test', function() {
 	/* {{{ should_appname_authorize_works_fine() */
 	it('should_appname_authorize_works_fine', function(done) {
 		var itier	= ITier.init();
-		itier.connect('127.0.0.1', 'denied', '', 33750).on('error', function(error) {
+		itier.connect('127.0.0.1:33750', 'denied').on('error', function(error) {
 			error.should.include('[2000] Authenticate denied for "denied"');
 			done();
 		});

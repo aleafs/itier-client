@@ -236,10 +236,11 @@ ITier.prototype.query  = function (sql, data) {
  * @access public
  * @return this
  */
-ITier.prototype.connect  = function(host, user, pass, port) {
+ITier.prototype.connect  = function(host, user, pass) {
+  host	= host.split(':');
   SERVERS.push({
-    'host'  : host,
-    'port'  : port ? parseInt(port) : 9999,
+    'host'  : host[0],
+    'port'  : host.length > 1 ? parseInt(host[1]) : 9999,
   });
 
   if (user) {
