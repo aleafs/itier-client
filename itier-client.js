@@ -5,10 +5,10 @@
  * @author: zhangxc83@gmail.com
  */
 
-var HTTP  = require('http');
-var QUERY  = require('querystring');
+var HTTP	= require('http');
+var QUERY	= require('querystring');
 var Events  = require('events');
-var Util  = require('util');
+var Util	= require('util');
 
 /**
  * @缓存控制常量
@@ -24,7 +24,7 @@ var CACHE  = {
 var CONFIG  = {
   'version'  : '1.0',
   'timeout'  : 30,
-  'usecache'  : CACHE.READ | CACHE.WRITE,
+  'usecache' : CACHE.READ | CACHE.WRITE,
 };
 
 /**

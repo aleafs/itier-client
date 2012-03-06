@@ -4,9 +4,9 @@ itier-client is a client library for itier
 
 # Usage
 
-		var itier	= require('itier-client').init('username', 'password');
+		var itier	= require('itier-client').init();
 
-		itier.server('127.0.0.1', 9999).server('127.0.0.1',9999);
+		itier.connect('127.0.0.1:9999', 'username', 'password').connect('127.0.0.2');
 		itier.on('error', function(error) {
 			console.log(error);
 		});
@@ -23,5 +23,4 @@ itier-client is a client library for itier
 			'c'	: 1211,
 		});
 
-# Error Message
-
+# TODO
