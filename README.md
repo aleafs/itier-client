@@ -1,4 +1,3 @@
-
 [![Build Status](https://secure.travis-ci.org/aleafs/itier-client.png)](http://travis-ci.org/aleafs/itier-client)
 
 #About
@@ -27,3 +26,6 @@ itier-client is a client library for itier
 		});
 
 # TODO
+
+* Get itier service status and hosts list from config-server;
+* Query options support, such as "usecache" and "debugmode";
