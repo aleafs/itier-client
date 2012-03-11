@@ -27,14 +27,17 @@ var HTTP    = require('http').createServer(function(req, res) {
 
 describe('http-client-test', function() {
 
-    /* {{{ should_http_client_get_works_fine() */
-    it('should_http_client_get_works_fine', function(done) {
+    /* {{{ should_http_client_get_and_post_works_fine() */
+    it('should_http_client_get_and_post_works_fine', function(done) {
         var client  = Client.instance();
+        var count   = 2;
+
         client.bind('127.0.0.1', 33749);
-        client.on('error', function(err) {
+        client.setErrorHandle(function(error) {
             error.should.eql('', 'Unexpected error occurred.');
         });
-        client.on('data', function(data, code, header) {
+
+        client.get('/status?a=1.23456&b=B', function(data, code, header) {
             code.should.eql(200);
             header['x-header-1'].should.eql('a');
             header['x-header-2'].should.eql('B');
@@ -46,22 +49,13 @@ describe('http-client-test', function() {
             data.header['x-my-header'].should.eql('asdf');
             data.post.should.eql('');
 
-            done();
-        });
-        client.get('/status?a=1.23456&b=B', {'x-my-hEader' : 'asdf'});
-    });
-    /* }}} */
-
-    /* {{{ should_http_client_post_works_fine() */
-    it('should_http_client_post_works_fine', function(done) {
-        var client  = Client.instance();
-        client.bind('127.0.0.1', 33749);
-        client.on('error', function(err) {
-            error.should.eql('', 'Unexpected error occurred.');
-        });
-        client.on('data', function(data, code, header) {
-            code.should.eql(200);
-
+            if ((--count) == 0) {
+                done();
+            }
+        }, {'x-my-hEader' : 'asdf'}).post('/status?a=1.23456&b=B', {
+            'c1'    : 'C...1',
+            'c2'    : [1, 2, 3]
+        }, function(data, code, header) {
             data    = JSON.parse(data);
 
             data.url.should.include('/status?a=1.23456&b=B');
@@ -70,11 +64,9 @@ describe('http-client-test', function() {
                 'c1'    : 'C...1',
                 'c2'    : [1, 2, 3]
             }));
-            done();
-        });
-        client.post('/status?a=1.23456&b=B', {
-            'c1'    : 'C...1',
-            'c2'    : [1, 2, 3]
+            if ((--count) == 0) {
+                done();
+            }
         });
     });
     /* }}} */
