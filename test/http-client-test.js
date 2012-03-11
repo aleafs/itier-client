@@ -52,6 +52,33 @@ describe('http-client-test', function() {
     });
     /* }}} */
 
+    /* {{{ should_http_client_post_works_fine() */
+    it('should_http_client_post_works_fine', function(done) {
+        var client  = Client.instance();
+        client.bind('127.0.0.1', 33749);
+        client.on('error', function(err) {
+            error.should.eql('', 'Unexpected error occurred.');
+        });
+        client.on('data', function(data, code, header) {
+            code.should.eql(200);
+
+            data    = JSON.parse(data);
+
+            data.url.should.include('/status?a=1.23456&b=B');
+            data.method.should.eql('POST');
+            data.post.should.eql(JSON.stringify({
+                'c1'    : 'C...1',
+                'c2'    : [1, 2, 3]
+            }));
+            done();
+        });
+        client.post('/status?a=1.23456&b=B', {
+            'c1'    : 'C...1',
+            'c2'    : [1, 2, 3]
+        });
+    });
+    /* }}} */
+
 });
 
 after(function() {
