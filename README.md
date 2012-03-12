@@ -4,6 +4,9 @@
 
 itier-client is a client library for itier
 
+# Install
+		npm install itier-client
+
 # Usage
 
 		var itier	= require('itier-client').init({
@@ -25,5 +28,6 @@ itier-client is a client library for itier
 
 # TODO
 
+* Query options support, such as "usecache" and "debug" [done];
 * Get itier service status and hosts list from config-server;
-* Query options support, such as "usecache" and "debugmode";
+
