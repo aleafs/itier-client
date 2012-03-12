@@ -10,11 +10,11 @@ var HTTP    = require('http').createServer(function(req, res) {
         body    += buf.toString();
     });
     req.on('end', function() {
-        if (req.url.indexOf('/timeout/') >= 0) {
+        if (req.url.indexOf('/timeout') >= 0) {
             res.writeHead(502, {});
             setTimeout(function() {
                 res.end('200');
-            }, 200);
+            }, 1000);
         } else {
             res.writeHead(200, {
                 'x-header-1'    : 'a',
@@ -96,11 +96,28 @@ describe('http-client-test', function() {
         var client  = Client.create({'timeout' : 200});
         client.bind('127.0.0.1', 33749);
         client.setErrorHandle(function(msg, code) {
-            console.log(msg);
+            msg.should.include('Request timeout after 200 millisecond(s)');
+            code.should.eql(1100);
             done();
-        }).get('/timeout/only_for_test', function(data, code, header) {
-            console.log(data);
+        }).get('/timeout', function(data, code, header) {
+            data.should.eql('', 'Unexpected response when timeout.');
             done();
+        });
+    });
+    /* }}} */
+
+    /* {{{ should_http_walk_works_fine() */
+    it('should_http_walk_works_fine', function(done) {
+        var client  = Client.create();
+
+        var count   = 2;
+        client.bind('127.0.0.1', 33749).bind('127.0.0.1', 33749).setErrorHandle(function(msg,code) {
+            msg.should.eql('Unexpected error occurred.');
+            done();
+        }).walk('/walk', null, function(data, code, header) {
+            if ((--count) < 1) {
+                done();
+            }
         });
     });
     /* }}} */
