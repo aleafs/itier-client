@@ -1,7 +1,7 @@
 /* vim: set expandtab tabstop=2 shiftwidth=2 foldmethod=marker: */
 
-var should	= require('should');
-var Client	= require(__dirname + '/../lib/http-client.js');
+var should  = require('should');
+var Client  = require(__dirname + '/../lib/http-client.js');
 
 /* {{{ http service demo for unittest */
 var HTTP    = require('http').createServer(function(req, res) {
