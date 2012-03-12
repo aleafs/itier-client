@@ -86,7 +86,12 @@ describe('http-client-test', function() {
         client.setErrorHandle(function(msg, code) {
             msg.should.include('Empty server list or bad server id');
             code.should.eql(1000);
-            done();
+
+            client.bind('127.0.0.1', '11').setErrorHandle(function(msg, code){
+                msg.should.include('Error: connect ECONNREFUSED');
+                code.should.eql(1200);
+                done();
+            }).get('/a');
         }).get('/a');
     });
     /* }}} */
