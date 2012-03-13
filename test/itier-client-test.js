@@ -18,7 +18,7 @@ var HTTP    = require('http').createServer(function(req, res) {
         var _me = JSON.parse(body);
 
         var ret = JSON.stringify([{'c1':1,'c2':2},{'c1':3,'c2':4}]);
-        var prf = JSON.stringify([{'sql':_me.__SQL__,'title':'aa'}]);
+        var prf = JSON.stringify([{'sql':_me.sql,'title':'aa'}]);
         res.writeHead(200, {
             'Content-Type'  : 'text/plain',
             'X-App-Status'  : 200,
