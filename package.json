@@ -1,6 +1,6 @@
 {
   "name": "itier",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "author": "Aleafs Zhang (zhangxc83@gmail.com)",
   "homepage": "https://github.com/aleafs/itier-client",
   "description": "A client library for itier in Node.",

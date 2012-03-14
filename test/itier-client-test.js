@@ -3,6 +3,7 @@
 var should  = require('should');
 var ITier   = require(__dirname + '/../');
 
+/* {{{ mock itier service on 33750 */
 var HTTP    = require('http').createServer(function(req, res) {
     if (req.headers['x-app-name'] == 'denied') {
         res.writeHead(401, {'WWW-Authenticate' : 'Basic realm="."'});
@@ -31,6 +32,7 @@ var HTTP    = require('http').createServer(function(req, res) {
         res.end(ret);
     });
 }).listen(33750);
+/* }}} */
 
 describe('itier-client-test', function() {
 
@@ -49,7 +51,20 @@ describe('itier-client-test', function() {
                 'row_num'   : 2,
                 'column_num': 2,
             });
-            header.should.have.property('status');
+            done();
+        });
+    });
+    /* }}} */
+
+    /* {{{ should_fetch_mode_equal_array_works_fine() */
+    it('should_fetch_mode_equal_array_works_fine', function(done) {
+        var itier   = ITier.createClient({
+            'fetchmode' : ITier.FETCH.ARRAY,
+        });
+        itier.connect('127.0.0.1', 33750);
+        itier.query('SELECT * FROM myfox.table_info', null, function(error, data, header, profile) {
+            data.should.eql([[1,2],[3,4]]);
+            header.columns.should.eql(['c1','c2']);
             done();
         });
     });
