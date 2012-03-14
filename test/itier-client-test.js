@@ -10,23 +10,25 @@ var HTTP    = require('http').createServer(function(req, res) {
         return;
     }
 
-    var body    = '';
     req.on('data', function(buf) {
-        body    += buf.toString();
     });
     req.on('end', function() {
-        var _me = JSON.parse(body);
-
-        var ret = JSON.stringify([{'c1':1,'c2':2},{'c1':3,'c2':4}]);
-        var prf = JSON.stringify([{'sql':_me.sql,'title':'aa'}]);
-        res.writeHead(200, {
-            'Content-Type'  : 'text/plain',
-            'X-App-Status'  : 200,
-            'X-App-datalen' : ret.length,
-            'X-app-expire'  : 329,
+        var ret = JSON.stringify({
+            'v' : '1.0',                /**<    数据格式版本号  */
+            'c' : 200,                  /**<    请求返回码      */
+            'm' : 'status ok',          /**<    响应消息        */
+            't' : 2,                    /**<    数据总行数      */
+            'n' : 2,                    /**<    此次请求返回总行数  */
+            'fn': 2,                    /**<    字段数  */
+            'f' : ['c1', 'c2'],         /**<    字段名  */
+            'd' : [[1,2],[3,4]],        /**<    数据体  */
         });
 
-        res.end(ret + prf);
+        res.writeHead(200, {
+            'Content-Type'  : 'text/plain',
+        });
+
+        res.end(ret);
     });
 }).listen(33750);
 
@@ -38,14 +40,9 @@ describe('itier-client-test', function() {
         itier.connect('127.0.0.1', 33750);
         itier.query('SELECT * FROM myfox.table_info', null, function(error, data, header, profile) {
             data.should.eql([{'c1':1,'c2':2},{'c1':3,'c2':4}]);
-            profile.should.eql([{
-                'sql'   : 'SELECT * FROM myfox.table_info',
-                'title' : 'aa',
-            }]);
-
-            header.expire.should.eql('329');
+            profile.should.eql([]);
+            header.expire.should.eql(-1);
             header.should.have.property('status');
-            header.should.have.property('datalen');
             done();
         });
     });
