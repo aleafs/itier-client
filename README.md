@@ -9,7 +9,7 @@ itier-client is a client library for itier
 
 # Usage
 
-		var itier	= require('itier-client').createClient({
+		var itier	= require('itier').createClient({
                 'appname'   : 'username',
                 'apppass'   : 'password',
         });
