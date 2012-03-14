@@ -77,8 +77,7 @@ describe('itier-client-test', function() {
         });
         itier.connect('127.0.0.1', 33750);
         itier.query('SHOW TABLES', null, function(error, data, header, profile) {
-            error.should.include('Authenticate denied for "denied"');
-            header.errno.should.eql(2000);
+            error.toString().should.include('Authenticate denied for "denied"');
             done();
         });
     });
