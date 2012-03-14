@@ -34,10 +34,9 @@ describe('itier-client-test', function() {
 
     /* {{{ should_select_data_from_itier_works_fine() */
     it('should_select_data_from_itier_works_fine', function(done) {
-        var itier   = ITier.init();
-        itier.connect('127.0.0.1', 33750).setErrorHandle(function(error) {
-            error.should.eql('', 'Unexpected error occurred');
-        }).query('SELECT * FROM myfox.table_info', null, function(data, header, profile) {
+        var itier   = ITier.createClient();
+        itier.connect('127.0.0.1', 33750);
+        itier.query('SELECT * FROM myfox.table_info', null, function(error, data, header, profile) {
             data.should.eql([{'c1':1,'c2':2},{'c1':3,'c2':4}]);
             profile.should.eql([{
                 'sql'   : 'SELECT * FROM myfox.table_info',
@@ -54,15 +53,14 @@ describe('itier-client-test', function() {
 
     /* {{{ should_appname_authorize_works_fine() */
     it('should_appname_authorize_works_fine', function(done) {
-        var itier   = ITier.init({
+        var itier   = ITier.createClient({
             'appname'   : 'denied',
         });
-        itier.connect('127.0.0.1', 33750).setErrorHandle(function(error, code) {
+        itier.connect('127.0.0.1', 33750);
+        itier.query('SHOW TABLES', null, function(error, data, header, profile) {
             error.should.include('Authenticate denied for "denied"');
-            code.should.eql(2000);
+            header.errno.should.eql(2000);
             done();
-        }).query('SHOW TABLES', null, function(data, header, profile) {
-
         });
     });
     /* }}} */
