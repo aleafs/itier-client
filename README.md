@@ -12,10 +12,11 @@ $ npm install itier
 
 # Usage
 
-```
+```javascript
 var itier = require('itier').createClient({
-  'appname': 'username',
-  'apppass': 'password',
+  appname: 'username',
+  apppass: 'password',
+  timeout: 5000, // 5 seconds
 });
 
 // connect ITier servers
@@ -38,3 +39,15 @@ itier.query('SELECT * FROM table WHERE c1 = :c', {
 * Query options support, such as "usecache" and "debug" [done];
 * Get itier service status and hosts list from config-server;
 
+# Authors
+
+Below is the output from git-summary.
+
+```
+ project: itier-client
+ commits: 53
+ files  : 10
+ authors: 
+    52  aleafs                  98.1%
+     1  fengmk2                 1.9%
+```

@@ -2,9 +2,13 @@
   "name": "itier",
   "version": "0.0.6",
   "author": "Aleafs Zhang (zhangxc83@gmail.com)",
+  "contributors": [
+    { "name": "Aleafs Zhang", "email": "zhangxc83@gmail.com" },
+    { "name": "fengmk2", "email": "fengmk2@gmail.com" }
+  ],
   "homepage": "https://github.com/aleafs/itier-client",
   "description": "A client library for itier in Node.",
-  "keywords": ["itier", "client"],
+  "keywords": [ "itier", "client" ],
   "dependencies": {},
   "engines": {
     "node": ">=0.6.6"
