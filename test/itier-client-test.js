@@ -41,7 +41,14 @@ describe('itier-client-test', function() {
         itier.query('SELECT * FROM myfox.table_info', null, function(error, data, header, profile) {
             data.should.eql([{'c1':1,'c2':2},{'c1':3,'c2':4}]);
             profile.should.eql([]);
-            header.expire.should.eql(-1);
+            header.should.eql({
+                'version'   : '1.0',
+                'status'    : 200,
+                'expire'    : -1,
+                'message'   : 'status ok',
+                'row_num'   : 2,
+                'column_num': 2,
+            });
             header.should.have.property('status');
             done();
         });
