@@ -83,7 +83,6 @@ describe('itier-client-test', function() {
         });
     });
     /* }}} */
-
 });
 
 after(function() {

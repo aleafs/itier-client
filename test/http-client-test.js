@@ -101,7 +101,7 @@ describe('http-client-test', function() {
         client.bind('127.0.0.1', 33748);
         client.get('/timeout', function(err, data, code, header) {
             should.exist(err);
-            err.message.should.include('socket hang up');
+            err.message.should.include('Request Timeout 300ms');
             err.code.should.eql('ECONNRESET');
             setTimeout(function() {
                 done();
