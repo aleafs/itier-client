@@ -10,10 +10,21 @@ var HTTP    = require('http').createServer(function(req, res) {
         res.end('Authenticate denied for "' + req.headers['x-app-name'] + '"');
         return;
     }
-
+    var data = '';
     req.on('data', function(buf) {
+        data += buf.toString();
     });
     req.on('end', function() {
+        if (data.indexOf('hbase.t404') > 0) {
+            var hbase404 = '{"v":"1.0","c":400,"m":"hbase status code error: 404","t":0,"n":0,"fn":0,"f":[],"d":[]}';
+            return res.end(hbase404);
+        }
+
+        if (data.indexOf('objectErrorMessage') > 0) {
+            var hbase404 = '{"v":"1.0","c":400,"m":{},"t":0,"n":0,"fn":0,"f":[],"d":[]}';
+            return res.end(hbase404);
+        }
+
         var ret = JSON.stringify({
             'v' : '1.0',                /**<    数据格式版本号  */
             'c' : 200,                  /**<    请求返回码      */
@@ -35,12 +46,15 @@ var HTTP    = require('http').createServer(function(req, res) {
 /* }}} */
 
 describe('itier-client-test', function() {
+    var client = null;
+    before(function() {
+        client = ITier.createClient();
+        client.connect('127.0.0.1', 33750);
+    });
 
     /* {{{ should_select_data_from_itier_works_fine() */
     it('should_select_data_from_itier_works_fine', function(done) {
-        var itier   = ITier.createClient();
-        itier.connect('127.0.0.1', 33750);
-        itier.query('SELECT * FROM myfox.table_info', null, function(error, data, header, profile) {
+        client.query('SELECT * FROM myfox.table_info', null, function(error, data, header, profile) {
             data.should.eql([{'c1':1,'c2':2},{'c1':3,'c2':4}]);
             profile.should.eql([]);
             header.should.eql({
@@ -83,6 +97,24 @@ describe('itier-client-test', function() {
         });
     });
     /* }}} */
+
+    it('should return [] when hbase 404', function(done) {
+        client.query('select * from hbase.t404 where row = :r', { r: 123 }, function(err, rows) {
+            should.not.exist(err);
+            rows.should.length(0);
+            done();
+        });
+    });
+
+    it('error.message should be {} not [object Object]', function(done) {
+        client.query('select * from objectErrorMessage', null, function(err, rows) {
+            should.exist(err);
+            err.message.should.equal('{}');
+            err.code.should.equal('ItierError');
+            should.not.exist(rows);
+            done();
+        });
+    });
 });
 
 after(function() {
