@@ -6,7 +6,7 @@ itier-client is a client library for [ITier](https://github.com/xianbei/itier).
 
 # Install
     
-```
+```bash
 $ npm install itier
 ```
 
@@ -41,7 +41,7 @@ itier.query('SELECT * FROM table WHERE c1 = :c', {
 
 # Authors
 
-Below is the output from git-summary.
+Below is the output from `git-summary`.
 
 ```
  project: itier-client

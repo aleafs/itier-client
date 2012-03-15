@@ -77,7 +77,8 @@ describe('itier-client-test', function() {
         });
         itier.connect('127.0.0.1', 33750);
         itier.query('SHOW TABLES', null, function(error, data, header, profile) {
-            error.toString().should.include('Authenticate denied for "denied"');
+            error.message.should.equal('HTTP 401 Response');
+            error.body.should.equal('Authenticate denied for "denied"');
             done();
         });
     });
