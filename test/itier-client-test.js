@@ -49,7 +49,7 @@ describe('itier-client-test', function() {
                 'expire'    : -1,
                 'message'   : 'status ok',
                 'row_num'   : 2,
-                'column_num': 2,
+                'column_num': 2
             });
             done();
         });
