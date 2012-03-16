@@ -1,7 +1,9 @@
 /* vim: set expandtab tabstop=2 shiftwidth=2 foldmethod=marker: */
 
-var jscover = require('jscoverage');
-require = jscover.require(module);
+if (process.env.JSCOV) {
+    var jscover = require('jscoverage');
+    require = jscover.require(module);
+}
 
 var should  = require('should');
 var Client  = require(__dirname + '/../lib/http-client.js', true);
