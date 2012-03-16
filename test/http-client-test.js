@@ -1,7 +1,6 @@
 /* vim: set expandtab tabstop=2 shiftwidth=2 foldmethod=marker: */
 
 var jscover = require('jscoverage');
-
 require = jscover.require(module);
 
 var should  = require('should');
@@ -161,6 +160,4 @@ after(function() {
     server2.close();
     server3.close();
 });
-
-process.on('exit', jscover.coverage);
 
