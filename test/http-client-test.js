@@ -56,7 +56,8 @@ describe('http-client-test', function() {
             data.url.should.include('/a/status?a=1.23456&b=B');
             data.method.should.eql('GET');
             data.header['x-my-header'].should.eql('asdf');
-            data.post.should.eql('');
+            data.header.should.not.have.property('post');
+            data.header.should.not.have.property('content-length');
 
             if ((--count) == 0) {
                 done();
@@ -147,6 +148,19 @@ describe('http-client-test', function() {
                     });
                 });
             });
+        });
+    });
+
+    it('should post with Content-Length', function(done) {
+        var client  = Client.create();
+        client.bind('127.0.0.1', 33748).bind('127.0.0.1', 33749);
+        var post = {"a":"b"};
+        client.post('/post', post, function(err, data, code, header) {
+            should.not.exist(err);
+            code.should.equal(200);
+            data = JSON.parse(data);
+            data.header['content-length'].should.equal(''+JSON.stringify(post).length);
+            done();
         });
     });
 
