@@ -1,7 +1,13 @@
 /* vim: set expandtab tabstop=2 shiftwidth=2 foldmethod=marker: */
 
+if (process.env.JSCOV) {
+    var jscover = require('jscoverage');
+    require = jscover.require(module);
+    process.on('exit', jscover.coverage);
+}
+
 var should  = require('should');
-var ITier   = require(__dirname + '/../');
+var ITier   = require(__dirname + '/../', true);
 
 /* {{{ mock itier service on 33750 */
 var HTTP    = require('http').createServer(function(req, res) {

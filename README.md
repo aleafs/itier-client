@@ -1,5 +1,7 @@
 [![Build Status](https://secure.travis-ci.org/aleafs/itier-client.png)](http://travis-ci.org/aleafs/itier-client)
 
+[JS Coverage] /Users/aleafs/works/opensource/itier-client/lib/http-client.js:90.54%
+
 # About
 
 itier-client is a client library for [ITier](https://github.com/xianbei/itier).
