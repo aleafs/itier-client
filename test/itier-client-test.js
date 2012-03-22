@@ -116,7 +116,7 @@ describe('itier-client-test', function() {
         client.query('select * from objectErrorMessage', null, function(err, rows) {
             should.exist(err);
             err.message.should.equal('{}');
-            err.code.should.equal('ItierError');
+            err.name.should.equal('ITierError');
             should.not.exist(rows);
             done();
         });

@@ -91,7 +91,8 @@ describe('http-client-test', function() {
         var client  = Client.create();
         client.get('/a', function(error, data, code, header) {
             error.number.should.eql(1000);
-            error.toString().should.include('empty server list or bad server id');
+            error.name.should.equal('BadServer');
+            error.toString().should.include('Empty server list or bad server id');
             client.bind('127.0.0.1', 11).get('/a', function(error, data) {
                 error.number.should.eql(1200);
                 error.toString().should.include('connect ECONNREFUSE');
@@ -107,8 +108,9 @@ describe('http-client-test', function() {
         client.bind('127.0.0.1', 33748);
         client.get('/timeout', function(err, data, code, header) {
             should.exist(err);
+            err.name.should.equal('RequestTimeout');
             err.message.should.include('Request Timeout 300ms');
-            err.code.should.eql('ECONNRESET');
+            err.code.should.equal('ECONNRESET');
             setTimeout(function() {
                 done();
             }, 500)
@@ -122,7 +124,7 @@ describe('http-client-test', function() {
         var count   = 2;
         client.bind('127.0.0.1', 33748).bind('127.0.0.1', 33749);
         client.walk('/walk', null, function(error, data, code, header) {
-            should.ok(!error);
+            should.not.exist(error);
             if ((--count) < 1) {
                 done();
             }
