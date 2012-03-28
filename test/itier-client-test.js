@@ -31,7 +31,7 @@ var HTTP    = require('http').createServer(function(req, res) {
             return res.end(hbase404);
         }
 
-        var ret = JSON.stringify({
+        var ret = {
             'v' : '1.0',                /**<    数据格式版本号  */
             'c' : 200,                  /**<    请求返回码      */
             'm' : 'status ok',          /**<    响应消息        */
@@ -40,13 +40,17 @@ var HTTP    = require('http').createServer(function(req, res) {
             'fn': 2,                    /**<    字段数  */
             'f' : ['c1', 'c2'],         /**<    字段名  */
             'd' : [[1,2],[3,4]],        /**<    数据体  */
-        });
+        };
 
-        res.writeHead(200, {
+        var headers = {
             'Content-Type'  : 'text/plain',
-        });
+        };
+        if ('x-itier-expire' in req.headers) {
+            ret.d.push([100, req.headers['x-itier-expire']]);
+        }
+        res.writeHead(200, headers);
 
-        res.end(ret);
+        res.end(JSON.stringify(ret));
     });
 }).listen(33750);
 /* }}} */
@@ -120,6 +124,15 @@ describe('itier-client-test', function() {
             should.not.exist(rows);
             done();
         });
+    });
+
+    it("should set `'x-itier-expire'` success", function(done) {
+        client.query('select * from myfox.table_info', null, function(err, rows, headers) {
+            should.not.exist(err);
+            rows.should.length(3);
+            rows[2].c2.should.equal('0');
+            done();
+        }, { expire: 0 });
     });
 });
 
