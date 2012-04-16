@@ -27,8 +27,22 @@ var HTTP    = require('http').createServer(function(req, res) {
         }
 
         if (data.indexOf('objectErrorMessage') > 0) {
-            var hbase404 = '{"v":"1.0","c":400,"m":{},"t":0,"n":0,"fn":0,"f":[],"d":[]}';
-            return res.end(hbase404);
+            var error = '{"v":"1.0","c":400,"m":{},"t":0,"n":0,"fn":0,"f":[],"d":[]}';
+            return res.end(error);
+        }
+
+        if (data.indexOf('id in (:id)') > 0) {
+            var ret = {
+                'v' : '1.0',                
+                'c' : 200,                  
+                'm' : 'status ok',       
+                't' : 2,           
+                'n' : 2,          
+                'fn': 2,        
+                'f' : ['c1'],   
+                'd' : [[JSON.parse(data)]], 
+            };
+            return res.end(JSON.stringify(ret));
         }
 
         var ret = {
@@ -133,6 +147,21 @@ describe('itier-client-test', function() {
             rows[2].c2.should.equal('0');
             done();
         }, { expire: 0 });
+    });
+
+    it('should support WHERE id in (:id)', function(done) {
+        client.query('select * from hbase.test where id in (:id)', 
+        { id: [ '123', 123, 567 ] }, function(err, rows) {
+            should.not.exist(err);
+            rows.should.length(1);
+            var row = rows[0];
+            row.should.have.keys([ 'c1' ]);
+            row.c1.should.have.keys([ 'sql', 'data', 'type' ]);
+            row.c1.type.should.eql({
+                id: 'array|string'
+            });
+            done();
+        });
     });
 });
 
