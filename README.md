@@ -47,9 +47,9 @@ Below is the output from `git-summary`.
 
 ```
  project: itier-client
- commits: 55
+ commits: 77
  files  : 10
  authors: 
-    52  aleafs                  94.5%
-     3  fengmk2                 5.5%
+    63  aleafs                  81.8%
+    14  fengmk2                 18.2%
 ```

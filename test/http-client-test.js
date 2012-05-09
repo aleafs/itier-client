@@ -134,38 +134,6 @@ describe('http-client-test', function() {
   });
   /* }}} */
 
-  /* {{{ should_request_many_ports_works_fine() */
-  it('should request :33748 => :33749 => :33747 => :33748', function(done) {
-    var client = Client.create({
-      'heartbeat'   : 2,
-    });
-    client.bind('127.0.0.1', 33748).bind('127.0.0.1', 33749).bind('127.0.0.1', 33747);
-    setTimeout(function() {
-      client.post('/post', { a: '123' }, function(err, data, code, headers) {
-        should.not.exist(err);
-        var r = JSON.parse(data);
-        r.header.host.should.equal('127.0.0.1:33748');
-        client.post('/post', { a: '123' }, function(err, data, code, headers) {
-          should.not.exist(err);
-          var r = JSON.parse(data);
-          r.header.host.should.equal('127.0.0.1:33749');
-          client.post('/post', { a: '123' }, function(err, data, code, headers) {
-            should.not.exist(err);
-            var r = JSON.parse(data);
-            r.header.host.should.equal('127.0.0.1:33747');
-            client.post('/post', { a: '123' }, function(err, data, code, headers) {
-              should.not.exist(err);
-              var r = JSON.parse(data);
-              r.header.host.should.equal('127.0.0.1:33748');
-              done();
-            });
-          });
-        });
-      });
-    }, 100);
-  });
-  /* }}} */
-
   /* {{{ should_post_with_content_length_works_fine() */
   it('should post with Content-Length', function(done) {
     var client  = Client.create();
