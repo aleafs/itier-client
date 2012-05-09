@@ -98,6 +98,7 @@ describe('http-client-test', function() {
       client.bind('127.0.0.1', 11).get('/a', function(error, data) {
         error.number.should.eql(1200);
         error.toString().should.include('connect ECONNREFUSE');
+        error.message.should.equal('connect ECONNREFUSED (127.0.0.1:11)');
         done();
       });
     });
@@ -111,7 +112,7 @@ describe('http-client-test', function() {
     client.get('/timeout', function(err, data, code, header) {
       should.exist(err);
       err.name.should.equal('RequestTimeout');
-      err.message.should.include('Request Timeout 300ms');
+      err.message.should.equal('Request Timeout 300ms. (127.0.0.1:33748)');
       err.code.should.equal('ECONNRESET');
       setTimeout(function() {
         done();
