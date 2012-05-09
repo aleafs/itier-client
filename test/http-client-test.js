@@ -38,106 +38,109 @@ function handle(req, res) {
 /* }}} */
 
 /* {{{ http service demo for unittest */
-var server1 = http.createServer(handle).listen(33749)
-  var server2 = http.createServer(handle).listen(33748);
-  var server3 = http.createServer(handle).listen(33747);
-  /* }}} */
+var server1 = http.createServer(handle).listen(33749);
+var server2 = http.createServer(handle).listen(33748);
+var server3 = http.createServer(handle).listen(33747);
+/* }}} */
 
-  describe('http-client-test', function() {
+describe('http-client-test', function() {
 
-    /* {{{ should_http_client_get_and_post_works_fine() */
-    it('should_http_client_get_and_post_works_fine', function(done) {
-      var client  = Client.create({
-        'prefix'    : '/a',
-      });
-      var count   = 2;
+  /* {{{ should_http_client_get_and_post_works_fine() */
+  it('should_http_client_get_and_post_works_fine', function(done) {
+    var client  = Client.create({
+      'prefix'    : '/a',
+    });
+    var count   = 2;
 
-      client.bind('127.0.0.1', 33749);
-      client.get('/status?a=1.23456&b=B', function(error, data, code, header) {
-        code.should.eql(200);
-        header['x-header-1'].should.eql('a');
-        header['x-header-2'].should.eql('B');
+    client.bind('127.0.0.1', 33749);
+    client.get('/status?a=1.23456&b=B', function(error, data, code, header) {
+      code.should.eql(200);
+      header['x-header-1'].should.eql('a');
+      header['x-header-2'].should.eql('B');
 
-        data    = JSON.parse(data);
+      data    = JSON.parse(data);
 
-        data.url.should.include('/a/status?a=1.23456&b=B');
-        data.method.should.eql('GET');
-        data.header['x-my-header'].should.eql('asdf');
-        data.header.should.not.have.property('post');
-        data.header.should.not.have.property('content-length');
+      data.url.should.include('/a/status?a=1.23456&b=B');
+      data.method.should.eql('GET');
+      data.header['x-my-header'].should.eql('asdf');
+      data.header.should.not.have.property('post');
+      data.header.should.not.have.property('content-length');
 
-        if ((--count) == 0) {
-          done();
-        }
-      }, {'x-my-hEader' : 'asdf'}).post('/status?a=1.23456&b=B', {
+      if ((--count) == 0) {
+        done();
+      }
+    }, {'x-my-hEader' : 'asdf'}).post('/status?a=1.23456&b=B', {
+      'c1'    : 'C...1',
+      'c2'    : [1, 2, 3]
+    }, function(error, data, code, header) {
+      data    = JSON.parse(data);
+
+      data.url.should.include('/a/status?a=1.23456&b=B');
+      data.method.should.eql('POST');
+      data.post.should.eql(JSON.stringify({
         'c1'    : 'C...1',
         'c2'    : [1, 2, 3]
-      }, function(error, data, code, header) {
-        data    = JSON.parse(data);
+      }));
+      if ((--count) == 0) {
+        done();
+      }
+    });
+  });
+  /* }}} */
 
-        data.url.should.include('/a/status?a=1.23456&b=B');
-        data.method.should.eql('POST');
-        data.post.should.eql(JSON.stringify({
-          'c1'    : 'C...1',
-          'c2'    : [1, 2, 3]
-        }));
-        if ((--count) == 0) {
-          done();
-        }
+  /* {{{ should_set_error_handle_works_fine() */
+  it('should_set_error_handle_works_fine', function(done) {
+    var client  = Client.create();
+    client.get('/a', function(error, data, code, header) {
+      error.number.should.eql(1000);
+      error.name.should.equal('BadServer');
+      error.toString().should.include('Empty online list or bad server id');
+      client.bind('127.0.0.1', 11).get('/a', function(error, data) {
+        error.number.should.eql(1200);
+        error.toString().should.include('connect ECONNREFUSE');
+        done();
       });
     });
-    /* }}} */
+  });
+  /* }}} */
 
-    /* {{{ should_set_error_handle_works_fine() */
-    it('should_set_error_handle_works_fine', function(done) {
-      var client  = Client.create();
-      client.get('/a', function(error, data, code, header) {
-        error.number.should.eql(1000);
-        error.name.should.equal('BadServer');
-        error.toString().should.include('Empty server list or bad server id');
-        client.bind('127.0.0.1', 11).get('/a', function(error, data) {
-          error.number.should.eql(1200);
-          error.toString().should.include('connect ECONNREFUSE');
-          done();
-        });
-      });
+  /* {{{ should_http_request_timeout_works_fine() */
+  it('should_http_request_timeout_works_fine', function(done) {
+    var client  = Client.create({ timeout: 200 });
+    client.bind('127.0.0.1', 33748);
+    client.get('/timeout', function(err, data, code, header) {
+      should.exist(err);
+      err.name.should.equal('RequestTimeout');
+      err.message.should.include('Request Timeout 300ms');
+      err.code.should.equal('ECONNRESET');
+      setTimeout(function() {
+        done();
+      }, 500)
     });
-    /* }}} */
+  });
+  /* }}} */
 
-    /* {{{ should_http_request_timeout_works_fine() */
-    it('should_http_request_timeout_works_fine', function(done) {
-      var client  = Client.create({ timeout: 200 });
-      client.bind('127.0.0.1', 33748);
-      client.get('/timeout', function(err, data, code, header) {
-        should.exist(err);
-        err.name.should.equal('RequestTimeout');
-        err.message.should.include('Request Timeout 300ms');
-        err.code.should.equal('ECONNRESET');
-        setTimeout(function() {
-          done();
-        }, 500)
-      });
+  /* {{{ should_http_walk_works_fine() */
+  it('should_http_walk_works_fine', function(done) {
+    var client  = Client.create();
+    var count   = 2;
+    client.bind('127.0.0.1', 33748).bind('127.0.0.1', 33749);
+    client.walk('/walk', null, function(error, data, code, header) {
+      should.not.exist(error);
+      if ((--count) < 1) {
+        done();
+      }
     });
-    /* }}} */
+  });
+  /* }}} */
 
-    /* {{{ should_http_walk_works_fine() */
-    it('should_http_walk_works_fine', function(done) {
-      var client  = Client.create();
-      var count   = 2;
-      client.bind('127.0.0.1', 33748).bind('127.0.0.1', 33749);
-      client.walk('/walk', null, function(error, data, code, header) {
-        should.not.exist(error);
-        if ((--count) < 1) {
-          done();
-        }
-      });
+  /* {{{ should_request_many_ports_works_fine() */
+  it('should request :33748 => :33749 => :33747 => :33748', function(done) {
+    var client = Client.create({
+      'heartbeat'   : 2,
     });
-    /* }}} */
-
-    /* {{{ should_request_many_ports_works_fine() */
-    it('should request :33748 => :33749 => :33747 => :33748', function(done) {
-      var client = Client.create();
-      client.bind('127.0.0.1', 33748).bind('127.0.0.1', 33749).bind('127.0.0.1', 33747);
+    client.bind('127.0.0.1', 33748).bind('127.0.0.1', 33749).bind('127.0.0.1', 33747);
+    setTimeout(function() {
       client.post('/post', { a: '123' }, function(err, data, code, headers) {
         should.not.exist(err);
         var r = JSON.parse(data);
@@ -159,25 +162,48 @@ var server1 = http.createServer(handle).listen(33749)
           });
         });
       });
-    });
-    /* }}} */
-
-    /* {{{ should_post_with_content_length_works_fine() */
-    it('should post with Content-Length', function(done) {
-      var client  = Client.create();
-      client.bind('127.0.0.1', 33748).bind('127.0.0.1', 33749);
-      var post = {"a":"b"};
-      client.post('/post', post, function(err, data, code, header) {
-        should.not.exist(err);
-        code.should.equal(200);
-        data = JSON.parse(data);
-        data.header['content-length'].should.equal(''+JSON.stringify(post).length);
-        done();
-      });
-    });
-    /* }}} */
-
+    }, 100);
   });
+  /* }}} */
+
+  /* {{{ should_post_with_content_length_works_fine() */
+  it('should post with Content-Length', function(done) {
+    var client  = Client.create();
+    client.bind('127.0.0.1', 33748).bind('127.0.0.1', 33749);
+    var post = {"a":"b"};
+    client.post('/post', post, function(err, data, code, header) {
+      should.not.exist(err);
+      code.should.equal(200);
+      data = JSON.parse(data);
+      data.header['content-length'].should.equal(''+JSON.stringify(post).length);
+      done();
+    });
+  });
+  /* }}} */
+
+  /* {{{ should_http_heartbeat_by_ping_works_fine() */
+  it('should_http_heartbeat_by_ping_works_fine', function(done) {
+    var client  = Client.create({
+      'heartbeat'   : 5,
+    });
+    client.bind('127.0.0.1', 33748).bind('1.1.1.1', 33749);
+
+    setTimeout(function() {
+      var num = 5;
+      for (var i = 0; i < num; i++) {
+        client.get('/heartbeat', function(error, data, code, header) {
+          JSON.parse(data.toString()).header.should.have.property('host', '127.0.0.1:33748');
+          num = num - 1;
+          if (num <= 0) {
+            done();
+          }
+        });
+      }
+    }, 100);
+  });
+  /* }}} */
+
+});
 
 after(function() {
   server1.close();
