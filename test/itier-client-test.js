@@ -52,9 +52,14 @@ var HTTP    = require('http').createServer(function(req, res) {
       't' : 2,                    /**<    数据总行数      */
       'n' : 2,                    /**<    此次请求返回总行数  */
       'fn': 2,                    /**<    字段数  */
-      'f' : ['c1', 'c2'],         /**<    字段名  */
-      'd' : [[1,2],[3,4]],        /**<    数据体  */
     };
+    if (req.url.indexOf('blackhole') > -1) {
+      ret.f = ['get', 'post'];
+      ret.d = [[1,2], [req.url, data]];
+    } else {
+      ret.f = ['c1', 'c2'];
+      ret.d = [[1,2],[3,4]];
+    }
 
     var headers = {
       'Content-Type'  : 'text/plain',
@@ -122,6 +127,7 @@ describe('itier-client-test', function() {
   });
   /* }}} */
 
+  /* {{{ should_return_[]_when_hbase_404() */
   it('should return [] when hbase 404', function(done) {
     client.query('select * from hbase.t404 where row = :r', { r: 123 }, function(err, rows) {
       should.not.exist(err);
@@ -129,7 +135,9 @@ describe('itier-client-test', function() {
       done();
     });
   });
+  /* }}} */
 
+  /* {{{ should_error_message_tobe_{}_not_object() */
   it('error.message should be {} not [object Object]', function(done) {
     client.query('select * from objectErrorMessage', null, function(err, rows) {
       should.exist(err);
@@ -139,7 +147,9 @@ describe('itier-client-test', function() {
       done();
     });
   });
+  /* }}} */
 
+  /* {{{ should_set_x-itier-expire_success() */
   it("should set `'x-itier-expire'` success", function(done) {
     client.query('select * from myfox.table_info', null, function(err, rows, headers) {
       should.not.exist(err);
@@ -148,21 +158,45 @@ describe('itier-client-test', function() {
       done();
     }, { expire: 0 });
   });
+  /* }}} */
 
+  /* {{{ should_support_where_id_in_array() */
   it('should support WHERE id in (:id)', function(done) {
-    client.query('select * from hbase.test where id in (:id)', 
-      { id: [ '123', 123, 567 ] }, function(err, rows) {
-                                                         should.not.exist(err);
-                                                         rows.should.length(1);
-                                                         var row = rows[0];
-                                                         row.should.have.keys([ 'c1' ]);
-                                                         row.c1.should.have.keys([ 'sql', 'data', 'type' ]);
-                                                         row.c1.type.should.eql({
-                                                           id: 'array|string'
-                                                         });
-                                                         done();
-                                                       });
+    var param   = {
+      'id'  : ['123', 123, 567],
+    };
+    client.query('select * from hbase.test where id in (:id)', param, function(err, rows) {
+      should.not.exist(err);
+      rows.should.length(1);
+      var row = rows[0];
+      row.should.have.keys([ 'c1' ]);
+      row.c1.should.have.keys([ 'sql', 'data', 'type' ]);
+      row.c1.type.should.eql({
+        id: 'array|string'
+      });
+      done();
+    });
   });
+  /* }}} */
+
+  /* {{{ should_itier_blackhole_works_fine() */
+  it('should_itier_blackhole_works_fine', function(done) {
+    var extra   = {
+      'blackhole'   : 'garuda',
+    };
+    client.query('SELECT * FROM myfox.table_info', null, function(error, data, header, profile) {
+      should.ok(!error);
+      data  = data.pop();
+      data.get.should.include('/blackhole/garuda?');
+      data.post.should.eql(JSON.stringify({
+        'sql'   : 'SELECT * FROM myfox.table_info',
+        'data'  : null,
+      }));
+      done();
+    }, extra);
+  });
+  /* }}} */
+
 });
 
 after(function() {
