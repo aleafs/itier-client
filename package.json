@@ -13,7 +13,7 @@
   "engines": {
     "node": ">=0.6.6"
   },
-  "main": "index.js",
+  "main": "./index.js",
   "devDependencies": {
     "should"     : ">=0.4.2",
     "mocha"      : ">=0.9.0",
