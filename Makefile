@@ -1,13 +1,16 @@
 TESTS = test/*.js
 TESTTIMEOUT = 10000
-VERSION = $(shell date +%Y%m%d%H%M%S)
+
+JSCOVERAGE="./node_modules/visionmedia-jscoverage/jscoverage"
 
 test:
 	@ ./node_modules/mocha/bin/mocha \
 		--reporter spec --timeout $(TESTTIMEOUT) $(TESTS)
 
 cov:
-	@JSCOV=1 ./node_modules/mocha/bin/mocha \
+	-mv lib lib.bak && $(JSCOVERAGE) lib.bak lib 
+	-./node_modules/mocha/bin/mocha \
 		--reporter html-cov --timeout ${TESTTIMEOUT} ${TESTS} > coverage.html
+	-rm -rf lib && mv lib.bak lib
 
 .PHONY: test
