@@ -87,11 +87,9 @@ describe('http-client-test', function() {
   it('should_set_error_handle_works_fine', function(done) {
     var client  = Client.create();
     client.get('/a', function(error, data, code, header) {
-      error.number.should.eql(1000);
-      error.name.should.equal('BadServer');
-      error.toString().should.include('Empty online list or bad server id');
+      error.code.should.equal('BadServer');
+      error.toString().should.include('Empty online list or bad server');
       client.bind('127.0.0.1', 11).get('/a', function(error, data) {
-        error.number.should.eql(1200);
         error.toString().should.include('connect ECONNREFUSE');
         error.message.should.equal('connect ECONNREFUSED (127.0.0.1:11)');
         done();
@@ -106,26 +104,11 @@ describe('http-client-test', function() {
     client.bind('127.0.0.1', 33748);
     client.get('/timeout', function(err, data, code, header) {
       should.exist(err);
-      err.name.should.equal('RequestTimeout');
-      err.message.should.equal('Request Timeout 300ms. (127.0.0.1:33748)');
-      err.code.should.equal('ECONNRESET');
+      err.code.should.equal('RequestTimeout');
+      err.message.should.equal('Request Timeout after 300ms. (127.0.0.1:33748)');
       setTimeout(function() {
         done();
       }, 500)
-    });
-  });
-  /* }}} */
-
-  /* {{{ should_http_walk_works_fine() */
-  it('should_http_walk_works_fine', function(done) {
-    var client  = Client.create();
-    var count   = 2;
-    client.bind('127.0.0.1', 33748).bind('127.0.0.1', 33749);
-    client.walk('/walk', null, function(error, data, code, header) {
-      should.not.exist(error);
-      if ((--count) < 1) {
-        done();
-      }
     });
   });
   /* }}} */
