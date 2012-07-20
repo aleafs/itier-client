@@ -34,6 +34,10 @@ itier.query('SELECT * FROM table WHERE c1 = :c', {
   // write to cache
   cache.write(key, data, header.expire + now);
 });
+
+itier.status('lastdate', function(error, status) {
+  console.log(status);
+});
 ```
 
 # TODO

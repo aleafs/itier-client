@@ -5,11 +5,45 @@ var ITier   = require(__dirname + '/../');
 
 /* {{{ mock itier service on 33750 */
 var HTTP    = require('http').createServer(function(req, res) {
-  if (req.headers['x-app-name'] == 'denied') {
+  if (req.headers['x-itier-username'] == 'denied') {
     res.writeHead(401, {'WWW-Authenticate' : 'Basic realm="."'});
-    res.end('Authenticate denied for "' + req.headers['x-app-name'] + '"');
+    res.end('Authenticate denied for "' + req.headers['x-itier-username'] + '"');
     return;
   }
+
+  if (req.headers['x-itier-explain']) {
+    res.end(JSON.stringify({
+      'v'   : '1.0',
+      'c'   : 200,
+      'm'   : '',
+      't'   : 2,
+      'n'   : 2,
+      'fn'  : 2,
+      'f'   : ['db', 'sql'],
+      'd'   : [['myfox', 'SELECT * FROM ...']],
+    }));
+    return;
+  }
+
+  if (req.url.indexOf('/status/') > -1) {
+    res.end("key1\tval1\nkey2val2");
+    return;
+  }
+
+  if (req.url.indexOf('/explain/') > -1) {
+    res.end(JSON.stringify({
+      'query'   : 'mysql query',
+      'loops'   : 2,
+      'score'   : 21.37,                /**<    SQL质量分   */
+      'detail'  : [{
+        'id'  : 1,
+      'select_type' : 'SIMPLE',
+      '...' : '其他就不写了',
+      }],
+    }));
+    return;
+  }
+
   var data = '';
   req.on('data', function(buf) {
     data += buf.toString();
@@ -25,16 +59,21 @@ var HTTP    = require('http').createServer(function(req, res) {
       return res.end(error);
     }
 
+    if (data.indexOf('mock.error') > 0) {
+      var error = '{"v":"1.0","c":500,"m":"Error: Query error #2003: Can\'t connect to MySQL server on \'10.232.132.78\' (4)","t":0,"n":0,"fn":0,"f":[],"d":[]}';
+      return res.end(error);
+    }    
+
     if (data.indexOf('id in (:id)') > 0) {
       var ret = {
-        'v' : '1.0',                
-    'c' : 200,                  
-    'm' : 'status ok',       
-    't' : 2,           
-    'n' : 2,          
-    'fn': 2,        
-    'f' : ['c1'],   
-    'd' : [[JSON.parse(data)]], 
+        'v' : '1.0',
+        'c' : 200,
+        'm' : 'status ok',
+        't' : 2,
+        'n' : 2,
+        'fn': 2,
+        'f' : ['c1'],
+        'd' : [[JSON.parse(data)]],
       };
       return res.end(JSON.stringify(ret));
     }
@@ -56,13 +95,13 @@ var HTTP    = require('http').createServer(function(req, res) {
     }
 
     var headers = {
-      'Content-Type'  : 'text/plain',
+      'Content-Type'    : 'text/plain',
+      'x-itier-agent'   : req.headers['user-agent'],
     };
     if ('x-itier-expire' in req.headers) {
       ret.d.push([100, req.headers['x-itier-expire']]);
     }
     res.writeHead(200, headers);
-
     res.end(JSON.stringify(ret));
   });
 }).listen(33750);
@@ -107,10 +146,11 @@ describe('itier-client-test', function() {
   });
   /* }}} */
 
-  /* {{{ should_appname_authorize_works_fine() */
-  it('should_appname_authorize_works_fine', function(done) {
+  /* {{{ should_username_authorize_works_fine() */
+  it('should_username_authorize_works_fine', function(done) {
     var itier   = ITier.createClient({
-      'appname'   : 'denied',
+      'username'   : 'denied',
+        'password'  : ' Iam2123llerm3l',
     });
     itier.connect('127.0.0.1', 33750);
     itier.query('SHOW TABLES', null, function(error, data, header, profile) {
@@ -136,6 +176,18 @@ describe('itier-client-test', function() {
     client.query('select * from objectErrorMessage', null, function(err, rows) {
       should.exist(err);
       err.message.should.equal('{}');
+      err.name.should.equal('ITierError');
+      should.not.exist(rows);
+      done();
+    });
+  });
+  /* }}} */
+
+  /* {{{ should_mock_error_message() */
+  it('error.message should be {} not [object Object]', function(done) {
+    client.query('select * from mock.error', null, function(err, rows, msg) {
+      should.exist(err);
+      err.message.should.equal('Error: Query error #2003: Can\'t connect to MySQL server on \'10.232.132.78\' (4)');
       err.name.should.equal('ITierError');
       should.not.exist(rows);
       done();
@@ -188,6 +240,40 @@ describe('itier-client-test', function() {
       }));
       done();
     }, extra);
+  });
+  /* }}} */
+
+  /* {{{ should_itier_status_works_fine() */
+  it('should_itier_status_works_fine', function(done) {
+    client.status('lastdate', function(error, data) {
+      JSON.stringify(data).should.eql(JSON.stringify([
+          {'Variable_name' : 'key1', 'Value' : 'val1'},
+          'key2val2',
+          ]));
+      done();
+    });
+  });
+  /* }}} */
+
+  /* {{{ should_itier_explain_works_fine() */
+  it ('should_itier_explain_works_fine', function(done) {
+    client.explain('SELECT * FROM myfox.dim_category LIMIT 1', null, function(error, plans) {
+      JSON.stringify(plans).should.eql(JSON.stringify([{
+        'db'    : 'myfox',
+        'sql'   : 'SELECT * FROM ...',
+        '__subplan' : {
+          'query'   : 'mysql query',
+        'loops'     : 2,
+        'score'     : 21.37,
+        'detail'    : [{
+          'id'  : 1,
+        'select_type'   : 'SIMPLE',
+        '...'   : '其他就不写了',
+        }]
+        }
+      }]));
+      done();
+    });
   });
   /* }}} */
 
