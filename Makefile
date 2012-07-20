@@ -1,16 +1,19 @@
-TESTS = test/*.js
-TESTTIMEOUT = 10000
 
 JSCOVERAGE="./node_modules/visionmedia-jscoverage/jscoverage"
 
-test:
-	@ ./node_modules/mocha/bin/mocha \
-		--reporter spec --timeout $(TESTTIMEOUT) $(TESTS)
+test: clean
+	@npm install
+	@./node_modules/mocha/bin/mocha --reporter spec --timeout 5000 test/*.js
+
 
 cov:
-	-mv lib lib.bak && $(JSCOVERAGE) lib.bak lib 
-	-./node_modules/mocha/bin/mocha \
-		--reporter html-cov --timeout ${TESTTIMEOUT} ${TESTS} > coverage.html
+	@npm install
+	-mv lib lib.bak && ${JSCOVERAGE} lib.bak lib
+	-./node_modules/mocha/bin/mocha --reporter html-cov --timeout 5000 test/*.js > ./coverage.html
 	-rm -rf lib && mv lib.bak lib
+
+clean:
+	-rm -rf ./coverage.html
+
 
 .PHONY: test
