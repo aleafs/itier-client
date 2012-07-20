@@ -146,7 +146,7 @@ describe('http-client-test', function() {
   /* }}} */
 
   /* {{{ should_http_heartbeat_by_ping_works_fine() */
-  it('should_http_heartbeat_by_ping_works_fine', function(done) {
+  xit('should_http_heartbeat_by_ping_works_fine', function(done) {
     var client  = Client.create({
       'heartbeat'   : 5,
     });
