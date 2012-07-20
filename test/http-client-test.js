@@ -105,7 +105,7 @@ describe('http-client-test', function() {
     client.get('/timeout', function(err, data, code, header) {
       should.exist(err);
       err.code.should.equal('RequestTimeout');
-      err.message.should.equal('Request Timeout after 300ms. (127.0.0.1:33748)');
+      err.message.should.equal('Request Timeout after 210ms. (127.0.0.1:33748)');
       setTimeout(function() {
         done();
       }, 500)
@@ -129,9 +129,10 @@ describe('http-client-test', function() {
   /* }}} */
 
   /* {{{ should_http_heartbeat_by_ping_works_fine() */
-  xit('should_http_heartbeat_by_ping_works_fine', function(done) {
+  it('should_http_heartbeat_by_ping_works_fine', function(done) {
     var client  = Client.create({
       'heartbeat'   : 5,
+        'pingurl'   : '/'
     });
     client.bind('127.0.0.1', 33748).bind('1.1.1.1', 33749);
 
