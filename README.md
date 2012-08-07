@@ -16,8 +16,8 @@ $ npm install itier
 
 ```javascript
 var itier = require('itier').createClient({
-  appname: 'username',
-  apppass: 'password',
+  appname: 'appname',
+  password: 'password',
   timeout: 5000, // 5 seconds
 });
 

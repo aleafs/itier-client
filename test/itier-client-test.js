@@ -4,8 +4,8 @@ var should  = require('should');
 var ITier   = require(__dirname + '/../');
 
 /* {{{ mock itier service on 33750 */
-var HTTP    = require('http').createServer(function(req, res) {
-  if (req.headers['x-itier-username'] == 'denied') {
+var HTTP    = require('http').createServer(function (req, res) {
+  if (req.headers['x-itier-username'] === 'denied') {
     res.writeHead(401, {'WWW-Authenticate' : 'Basic realm="."'});
     res.end('Authenticate denied for "' + req.headers['x-itier-username'] + '"');
     return;
@@ -45,10 +45,10 @@ var HTTP    = require('http').createServer(function(req, res) {
   }
 
   var data = '';
-  req.on('data', function(buf) {
+  req.on('data', function (buf) {
     data += buf.toString();
   });
-  req.on('end', function() {
+  req.on('end', function () {
     if (data.indexOf('hbase.t404') > 0) {
       var hbase404 = '{"v":"1.0","c":400,"m":"hbase status code error: 404","t":0,"n":0,"fn":0,"f":[],"d":[]}';
       return res.end(hbase404);
@@ -64,7 +64,7 @@ var HTTP    = require('http').createServer(function(req, res) {
       return res.end(error);
     }    
 
-    if (data.indexOf('id in (:id)') > 0) {
+    if (data.indexOf('id in (:id)') > 0 || data.indexOf('hbase.number') > 0) {
       var ret = {
         'v' : '1.0',
         'c' : 200,
@@ -115,8 +115,8 @@ describe('itier-client-test', function() {
   });
 
   /* {{{ should_select_data_from_itier_works_fine() */
-  it('should_select_data_from_itier_works_fine', function(done) {
-    client.query('SELECT * FROM myfox.table_info', null, function(error, data, header, profile) {
+  it('should_select_data_from_itier_works_fine', function (done) {
+    client.query('SELECT * FROM myfox.table_info', null, function (error, data, header, profile) {
       data.should.eql([{'c1':1,'c2':2},{'c1':3,'c2':4}]);
       profile.should.eql([]);
       header.should.eql({
@@ -206,16 +206,38 @@ describe('itier-client-test', function() {
   });
   /* }}} */
 
-  /* {{{ should_support_where_id_in_array() */
-  it('should support WHERE id in (:id)', function(done) {
-    var param   = {
-      'id'  : ['123', 123, 567],
+  /* {{{ should_support_number_type() */
+  it('should support number type in data{user_id: 123}', function (done) {
+    var param = {
+      user_id: 123,
     };
-    client.query('select * from hbase.test where id in (:id)', param, function(err, rows) {
+    client.query('select * from hbase.number where user_id = :user_id', param, function (err, rows) {
       should.not.exist(err);
       rows.should.length(1);
       var row = rows[0];
-      row.should.have.keys([ 'c1' ]);
+      row.should.have.keys('c1');
+      row.c1.should.have.keys('sql', 'data', 'type');
+      row.c1.type.should.eql({
+        user_id: 'int'
+      });
+      row.c1.data.should.eql({
+        user_id: 123
+      });
+      done();
+    });
+  });
+  /* }}} */
+  
+  /* {{{ should_support_where_id_in_array() */
+  it('should support WHERE id in (:id)', function (done) {
+    var param   = {
+      'id'  : ['123', 123, 567],
+    };
+    client.query('select * from hbase.test where id in (:id)', param, function (err, rows) {
+      should.not.exist(err);
+      rows.should.length(1);
+      var row = rows[0];
+      row.should.have.keys('c1');
       row.c1.should.have.keys([ 'sql', 'data', 'type' ]);
       row.c1.type.should.eql({
         id: 'array|string'
