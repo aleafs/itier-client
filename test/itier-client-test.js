@@ -36,9 +36,9 @@ var HTTP    = require('http').createServer(function (req, res) {
       'loops'   : 2,
       'score'   : 21.37,                /**<    SQL质量分   */
       'detail'  : [{
-        'id'  : 1,
-      'select_type' : 'SIMPLE',
-      '...' : '其他就不写了',
+        'id'    : 1,
+        'select_type' : 'SIMPLE',
+        '...'   : '其他就不写了',
       }],
     }));
     return;
@@ -49,23 +49,34 @@ var HTTP    = require('http').createServer(function (req, res) {
     data += buf.toString();
   });
   req.on('end', function () {
+    var error, ret;
     if (data.indexOf('hbase.t404') > 0) {
       var hbase404 = '{"v":"1.0","c":400,"m":"hbase status code error: 404","t":0,"n":0,"fn":0,"f":[],"d":[]}';
       return res.end(hbase404);
     }
 
     if (data.indexOf('objectErrorMessage') > 0) {
-      var error = '{"v":"1.0","c":400,"m":{},"t":0,"n":0,"fn":0,"f":[],"d":[]}';
+      error = '{"v":"1.0","c":400,"m":{},"t":0,"n":0,"fn":0,"f":[],"d":[]}';
       return res.end(error);
     }
 
     if (data.indexOf('mock.error') > 0) {
-      var error = '{"v":"1.0","c":500,"m":"Error: Query error #2003: Can\'t connect to MySQL server on \'10.232.132.78\' (4)","t":0,"n":0,"fn":0,"f":[],"d":[]}';
+      error = '{"v":"1.0","c":500,"m":"Error: Query error #2003: Can\'t connect to MySQL server on \'10.232.132.78\' (4)","t":0,"n":0,"fn":0,"f":[],"d":[]}';
       return res.end(error);
-    }    
+    }
+
+    if (data.indexOf('error.message') > 0) {
+      error = '{"v":"1.0","c":500,"m":"OTSMetaNotMatch : Primary key from request not match with the schema","t":0,"n":0,"fn":0,"f":[],"d":[]}';
+      return res.end(error);
+    }
+
+    if (data.indexOf('SomeServerError.message') > 0) {
+      error = '{"v":"1.0","c":500,"m":"SomeServerError : some backend server down","t":0,"n":0,"fn":0,"f":[],"d":[]}';
+      return res.end(error);
+    }
 
     if (data.indexOf('id in (:id)') > 0 || data.indexOf('hbase.number') > 0) {
-      var ret = {
+      ret = {
         'v' : '1.0',
         'c' : 200,
         'm' : 'status ok',
@@ -78,7 +89,7 @@ var HTTP    = require('http').createServer(function (req, res) {
       return res.end(JSON.stringify(ret));
     }
 
-    var ret = {
+    ret = {
       'v' : '1.0',                /**<    数据格式版本号  */
       'c' : 200,                  /**<    请求返回码      */
       'm' : 'status ok',          /**<    响应消息        */
@@ -88,10 +99,10 @@ var HTTP    = require('http').createServer(function (req, res) {
     };
     if (req.url.indexOf('blackhole') > -1) {
       ret.f = ['get', 'post'];
-      ret.d = [[1,2], [req.url, data]];
+      ret.d = [[1, 2], [req.url, data]];
     } else {
       ret.f = ['c1', 'c2'];
-      ret.d = [[1,2],[3,4]];
+      ret.d = [[1, 2], [3, 4]];
     }
 
     var headers = {
@@ -107,17 +118,21 @@ var HTTP    = require('http').createServer(function (req, res) {
 }).listen(33750);
 /* }}} */
 
-describe('itier-client-test', function() {
+describe('itier-client-test', function () {
   var client = null;
-  before(function() {
+  before(function () {
     client = ITier.createClient();
     client.connect('127.0.0.1', 33750);
+  });
+
+  after(function () {
+    HTTP.close();
   });
 
   /* {{{ should_select_data_from_itier_works_fine() */
   it('should_select_data_from_itier_works_fine', function (done) {
     client.query('SELECT * FROM myfox.table_info', null, function (error, data, header, profile) {
-      data.should.eql([{'c1':1,'c2':2},{'c1':3,'c2':4}]);
+      data.should.eql([{'c1': 1, 'c2': 2}, {'c1': 3, 'c2': 4}]);
       profile.should.eql([]);
       header.should.eql({
         'version'   : '1.0',
@@ -133,27 +148,27 @@ describe('itier-client-test', function() {
   /* }}} */
 
   /* {{{ should_fetch_mode_equal_array_works_fine() */
-  it('should_fetch_mode_equal_array_works_fine', function(done) {
+  it('should_fetch_mode_equal_array_works_fine', function (done) {
     var itier   = ITier.createClient({
       'fetchmode' : ITier.FETCH.ARRAY,
     });
     itier.connect('127.0.0.1', 33750);
-    itier.query('SELECT * FROM myfox.table_info', null, function(error, data, header, profile) {
-      data.should.eql([[1,2],[3,4]]);
-      header.columns.should.eql(['c1','c2']);
+    itier.query('SELECT * FROM myfox.table_info', null, function (error, data, header, profile) {
+      data.should.eql([[1, 2], [3, 4]]);
+      header.columns.should.eql(['c1', 'c2']);
       done();
     });
   });
   /* }}} */
 
   /* {{{ should_username_authorize_works_fine() */
-  it('should_username_authorize_works_fine', function(done) {
+  it('should_username_authorize_works_fine', function (done) {
     var itier   = ITier.createClient({
-      'username'   : 'denied',
-        'password'  : ' Iam2123llerm3l',
+      'username'  : 'denied',
+      'password'  : ' Iam2123llerm3l',
     });
     itier.connect('127.0.0.1', 33750);
-    itier.query('SHOW TABLES', null, function(error, data, header, profile) {
+    itier.query('SHOW TABLES', null, function (error, data, header, profile) {
       error.message.should.equal('HTTP 401 Response');
       error.body.should.equal('Authenticate denied for "denied"');
       done();
@@ -162,8 +177,8 @@ describe('itier-client-test', function() {
   /* }}} */
 
   /* {{{ should_return_[]_when_hbase_404() */
-  it('should return [] when hbase 404', function(done) {
-    client.query('select * from hbase.t404 where row = :r', { r: 123 }, function(err, rows) {
+  it('should return [] when hbase 404', function (done) {
+    client.query('select * from hbase.t404 where row = :r', {r: 123}, function (err, rows) {
       should.not.exist(err);
       rows.should.length(0);
       done();
@@ -172,8 +187,8 @@ describe('itier-client-test', function() {
   /* }}} */
 
   /* {{{ should_error_message_tobe_{}_not_object() */
-  it('error.message should be {} not [object Object]', function(done) {
-    client.query('select * from objectErrorMessage', null, function(err, rows) {
+  it('error.message should be {} not [object Object]', function (done) {
+    client.query('select * from objectErrorMessage', null, function (err, rows) {
       should.exist(err);
       err.message.should.equal('{}');
       err.name.should.equal('ITierError');
@@ -184,8 +199,8 @@ describe('itier-client-test', function() {
   /* }}} */
 
   /* {{{ should_mock_error_message() */
-  it('error.message should be {} not [object Object]', function(done) {
-    client.query('select * from mock.error', null, function(err, rows, msg) {
+  it('error.message should be {} not [object Object]', function (done) {
+    client.query('select * from mock.error', null, function (err, rows, msg) {
       should.exist(err);
       err.message.should.equal('Error: Query error #2003: Can\'t connect to MySQL server on \'10.232.132.78\' (4)');
       err.name.should.equal('ITierError');
@@ -196,8 +211,8 @@ describe('itier-client-test', function() {
   /* }}} */
 
   /* {{{ should_set_x-itier-expire_success() */
-  it("should set `'x-itier-expire'` success", function(done) {
-    client.query('select * from myfox.table_info', null, function(err, rows, headers) {
+  it("should set `'x-itier-expire'` success", function (done) {
+    client.query('select * from myfox.table_info', null, function (err, rows, headers) {
       should.not.exist(err);
       rows.should.length(3);
       rows[2].c2.should.equal('0');
@@ -248,11 +263,11 @@ describe('itier-client-test', function() {
   /* }}} */
 
   /* {{{ should_itier_blackhole_works_fine() */
-  it('should_itier_blackhole_works_fine', function(done) {
+  it('should_itier_blackhole_works_fine', function (done) {
     var extra   = {
       'blackhole'   : 'garuda',
     };
-    client.query('SELECT * FROM myfox.table_info', null, function(error, data, header, profile) {
+    client.query('SELECT * FROM myfox.table_info', null, function (error, data, header, profile) {
       should.ok(!error);
       data  = data.pop();
       data.get.should.include('/blackhole/garuda?');
@@ -266,32 +281,32 @@ describe('itier-client-test', function() {
   /* }}} */
 
   /* {{{ should_itier_status_works_fine() */
-  it('should_itier_status_works_fine', function(done) {
-    client.status('lastdate', function(error, data) {
+  it('should_itier_status_works_fine', function (done) {
+    client.status('lastdate', function (error, data) {
       JSON.stringify(data).should.eql(JSON.stringify([
-          {'Variable_name' : 'key1', 'Value' : 'val1'},
-          'key2val2',
-          ]));
+        {'Variable_name' : 'key1', 'Value' : 'val1'},
+        'key2val2',
+      ]));
       done();
     });
   });
   /* }}} */
 
   /* {{{ should_itier_explain_works_fine() */
-  it ('should_itier_explain_works_fine', function(done) {
-    client.explain('SELECT * FROM myfox.dim_category LIMIT 1', null, function(error, plans) {
+  it('should_itier_explain_works_fine', function (done) {
+    client.explain('SELECT * FROM myfox.dim_category LIMIT 1', null, function (error, plans) {
       JSON.stringify(plans).should.eql(JSON.stringify([{
         'db'    : 'myfox',
         'sql'   : 'SELECT * FROM ...',
         '__subplan' : {
           'query'   : 'mysql query',
-        'loops'     : 2,
-        'score'     : 21.37,
-        'detail'    : [{
-          'id'  : 1,
-        'select_type'   : 'SIMPLE',
-        '...'   : '其他就不写了',
-        }]
+          'loops'     : 2,
+          'score'     : 21.37,
+          'detail'    : [{
+            'id'  : 1,
+            'select_type'   : 'SIMPLE',
+            '...'   : '其他就不写了',
+          }]
         }
       }]));
       done();
@@ -299,9 +314,23 @@ describe('itier-client-test', function() {
   });
   /* }}} */
 
-});
+  it('should handle 500 with `SomeServerError.message`', function (done) {
+    client.query('select * from SomeServerError.message', null, function (err, data) {
+      should.exist(err);
+      err.should.have.property('name', 'SomeServerError');
+      err.should.have.property('message', 'some backend server down');
+      should.not.exist(data);
+      done();
+    });
+  });
 
-after(function() {
-  HTTP.close();
+  it('should handle 500 with error message', function (done) {
+    client.query('select * from error.message', null, function (err, data) {
+      should.exist(err);
+      err.should.have.property('name', 'OTSMetaNotMatchError');
+      err.should.have.property('message', 'Primary key from request not match with the schema');
+      should.not.exist(data);
+      done();
+    });
+  });
 });
-
