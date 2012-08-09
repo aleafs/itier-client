@@ -1,10 +1,9 @@
-
 JSCOVERAGE="./node_modules/visionmedia-jscoverage/jscoverage"
 
 test: clean
 	@npm install
-	@./node_modules/mocha/bin/mocha --reporter spec --timeout 5000 test/*.js
-
+	@./node_modules/mocha/bin/mocha --reporter spec --timeout 5000 \
+		$(MOCHA_OPTS) test/*.js
 
 cov:
 	@npm install
@@ -14,6 +13,5 @@ cov:
 
 clean:
 	-rm -rf ./coverage.html
-
 
 .PHONY: test
