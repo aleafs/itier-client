@@ -5,13 +5,17 @@ test: clean
 	@./node_modules/mocha/bin/mocha --reporter spec --timeout 5000 \
 		$(MOCHA_OPTS) test/*.js
 
-cov:
+test-cov: lib-cov
 	@npm install
-	-mv lib lib.bak && ${JSCOVERAGE} lib.bak lib
-	-./node_modules/mocha/bin/mocha --reporter html-cov --timeout 5000 test/*.js > ./coverage.html
-	-rm -rf lib && mv lib.bak lib
+	@ITIER_CLIENT_COV=1 ./node_modules/mocha/bin/mocha \
+		--reporter html-cov --timeout 5000 test/*.js > ./coverage.html
+
+lib-cov:
+	@rm -rf lib-cov
+	@${JSCOVERAGE} lib lib-cov
 
 clean:
-	-rm -rf ./coverage.html
+	@rm -rf lib-cov
+	@rm -f coverage.html
 
-.PHONY: test
+.PHONY: test test-cov lib-cov clean
