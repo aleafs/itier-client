@@ -2,6 +2,7 @@
 
 var should  = require('should');
 var ITier   = require(__dirname + '/../');
+var pedding = require('./utils/pedding');
 
 /* {{{ mock itier service on 33750 */
 var HTTP    = require('http').createServer(function (req, res) {
@@ -60,6 +61,16 @@ var HTTP    = require('http').createServer(function (req, res) {
       return res.end(error);
     }
 
+    if (data.indexOf('parseError') > 0) {
+      error = '{"v":"1.0","c":200,"m":{},"t":0,"n":0,"fn":0,"f":[],"d":[]123}';
+      return res.end(error);
+    }
+
+    if (data.indexOf('ItierVersionError') > 0) {
+      error = '{"v":"102.0","c":200,"m":{},"t":0,"n":0,"fn":0,"f":[],"d":[]}';
+      return res.end(error);
+    }
+
     if (data.indexOf('mock.error') > 0) {
       error = '{"v":"1.0","c":500,"m":"Error: Query error #2003: Can\'t connect to MySQL server on \'10.232.132.78\' (4)","t":0,"n":0,"fn":0,"f":[],"d":[]}';
       return res.end(error);
@@ -73,6 +84,34 @@ var HTTP    = require('http').createServer(function (req, res) {
     if (data.indexOf('SomeServerError.message') > 0) {
       error = '{"v":"1.0","c":500,"m":"SomeServerError : some backend server down","t":0,"n":0,"fn":0,"f":[],"d":[]}';
       return res.end(error);
+    }
+
+    if (data.indexOf('error.nohostlist1') > 0) {
+      error = '{"v":"1.0","c":500,"m":"no avaible host list for :ots","t":0,"n":0,"fn":0,"f":[],"d":[]}';
+      res.writeHead(500, {
+        'x-itier-realhost': '127.0.0.1'
+      });
+      return res.end(error);
+    }
+
+    if (data.indexOf('error.nohostlist2') > 0) {
+      error = '{"v":"1.0","c":500,"m":"no available host list for :ots","t":0,"n":0,"fn":0,"f":[],"d":[]}';
+      res.writeHead(500, {
+        'x-itier-realhost': '127.0.0.1'
+      });
+      return res.end(error);
+    }
+
+    if (data.indexOf('RequestTimeout') > 0) {
+      setTimeout(function () {
+        res.end('{"v":"1.0","c":200,"m":{},"t":0,"n":0,"fn":0,"f":[],"d":[]}');
+      }, 500);
+      return;
+    }
+
+    if (data.indexOf('SocketError') > 0) {
+      res.destroy();
+      return;
     }
 
     if (data.indexOf('id in (:id)') > 0 || data.indexOf('hbase.number') > 0) {
@@ -108,6 +147,7 @@ var HTTP    = require('http').createServer(function (req, res) {
     var headers = {
       'Content-Type'    : 'text/plain',
       'x-itier-agent'   : req.headers['user-agent'],
+      'x-itier-realhost': '127.0.0.1'
     };
     if ('x-itier-expire' in req.headers) {
       ret.d.push([100, req.headers['x-itier-expire']]);
@@ -140,7 +180,8 @@ describe('itier-client-test', function () {
         'expire'    : -1,
         'message'   : 'status ok',
         'row_num'   : 2,
-        'column_num': 2
+        'column_num': 2,
+        host        : '127.0.0.1'
       });
       done();
     });
@@ -156,6 +197,7 @@ describe('itier-client-test', function () {
     itier.query('SELECT * FROM myfox.table_info', null, function (error, data, header, profile) {
       data.should.eql([[1, 2], [3, 4]]);
       header.columns.should.eql(['c1', 'c2']);
+      header.should.have.property('host', '127.0.0.1');
       done();
     });
   });
@@ -329,6 +371,74 @@ describe('itier-client-test', function () {
       should.exist(err);
       err.should.have.property('name', 'OTSMetaNotMatchError');
       err.should.have.property('message', 'Primary key from request not match with the schema');
+      should.not.exist(data);
+      done();
+    });
+  });
+
+  it('should return NoAvailableServerError', function (done) {
+    done = pedding(2, done);
+    client.query('select * from error.nohostlist1', null, function (err, data) {
+      should.exist(err);
+      err.should.have.property('name', 'NoAvailableServerError');
+      err.should.have.property('message', 'no avaible host list for :ots');
+      err.should.have.property('host', '127.0.0.1');
+      should.not.exist(data);
+      done();
+    });
+    client.query('select * from error.nohostlist2', null, function (err, data) {
+      should.exist(err);
+      err.should.have.property('name', 'NoAvailableServerError');
+      err.should.have.property('message', 'no available host list for :ots');
+      err.should.have.property('host', '127.0.0.1');
+      should.not.exist(data);
+      done();
+    });
+  });
+
+  it('should return json parse error:SyntaxError', function (done) {
+    client.query('select * from parseError', null, function (err, data) {
+      should.exist(err);
+      err.should.have.property('name', 'SyntaxError');
+      err.should.have.property('message', 'Unexpected number');
+      err.should.have.property('body', '{"v":"1.0","c":200,"m":{},"t":0,"n":0,"fn":0,"f":[],"d":[]123}');
+      should.not.exist(data);
+      done();
+    });
+  });
+
+  it('should return ItierVersionError', function (done) {
+    client.query('select * from ItierVersionError', null, function (err, data) {
+      should.exist(err);
+      err.should.have.property('name', 'ItierVersionError');
+      err.should.have.property('message', 'Unexpected version as 102.0');
+      err.should.have.property('body');
+      err.body.should.eql({v: '102.0', c: 200, m: {}, t: 0, n: 0, fn: 0, f: [], d: []});
+      should.not.exist(data);
+      done();
+    });
+  });
+
+  it('should return RequestTimeoutError', function (done) {
+    var cacheTimeout = client.client.options.timeout;
+    client.client.options.timeout = 200;
+    client.query('select * from RequestTimeout', null, function (err, data) {
+      client.client.options.timeout = cacheTimeout;
+      should.exist(err);
+      err.should.have.property('name', 'RequestTimeoutError');
+      err.should.have.property('message');
+      err.message.should.include('Request Timeout after 210ms');
+      should.not.exist(data);
+      done();
+    });
+  });
+
+  it('should return RequestError', function (done) {
+    client.query('select * from SocketError', null, function (err, data) {
+      should.exist(err);
+      err.should.have.property('name', 'RequestError');
+      err.should.have.property('message');
+      err.message.should.include('socket hang up');
       should.not.exist(data);
       done();
     });
