@@ -3,23 +3,34 @@
   "version": "0.1.6",
   "author": "Aleafs Zhang (zhangxc83@gmail.com)",
   "contributors": [
-    { "name": "Aleafs Zhang", "email": "zhangxc83@gmail.com" },
-    { "name": "fengmk2", "email": "fengmk2@gmail.com" }
+    "Aleafs Zhang <zhangxc83@gmail.com>",
+    "fengmk2 <fengmk2@gmail.com>"
   ],
   "homepage": "https://github.com/aleafs/itier-client",
   "description": "A client library for itier in Node.",
-  "keywords": [ "itier", "client" ],
+  "keywords": [
+    "itier",
+    "client"
+  ],
   "dependencies": {},
   "engines": {
     "node": ">=0.6.6"
   },
   "main": "./index.js",
   "devDependencies": {
-    "should"     : ">=0.4.2",
-    "mocha"      : ">=0.9.0",
-    "visionmedia-jscoverage"    : "*"
+    "should": ">=0.4.2",
+    "mocha": ">=0.9.0",
+    "visionmedia-jscoverage": "*"
   },
   "scripts": {
     "test": "make test"
-  }
+  },
+  "directories": {
+    "lib": "./lib"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/aleafs/itier-client.git"
+  },
+  "license": "MIT"
 }
