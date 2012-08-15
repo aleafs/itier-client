@@ -161,7 +161,9 @@ var HTTP    = require('http').createServer(function (req, res) {
 describe('itier-client-test', function () {
   var client = null;
   before(function () {
-    client = ITier.createClient();
+    client = ITier.createClient({
+      'appname' : 'test',
+    });
     client.connect('127.0.0.1', 33750);
   });
 
