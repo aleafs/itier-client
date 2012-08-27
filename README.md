@@ -38,6 +38,28 @@ itier.status('lastdate', function(error, status) {
 });
 ```
 
+Use `agentkeepalive` on itier client:
+
+```bash
+# install agentkeepalive
+$ npm install agentkeepalive
+```
+
+```js
+var Agent = require('agentkeepalive');
+var keepaliveAgent = new Agent({
+  maxSockets: 100,
+  maxKeepAliveTime: 60000 // keepalive for 60 seconds
+});
+
+var itier = require('itier').createClient({
+  appname: 'appname',
+  password: 'password',
+  timeout: 5000, // 5 seconds
+  agent: keepaliveAgent
+});
+```
+
 # TODO
 
 * Query options support, such as "usecache" and "debug" [done];
@@ -63,13 +85,13 @@ Below is the output from `git-summary`.
 
 ```
  project: itier-client
- commits: 104
- active : 29 days
- files  : 11
+ commits: 111
+ active : 33 days
+ files  : 14
  authors: 
-    80  aleafs                  76.9%
-    16  fengmk2                 15.4%
-     8  Jackson Tian            7.7%
+    83  aleafs                  74.8%
+    20  fengmk2                 18.0%
+     8  Jackson Tian            7.2%
 ```
 
 ## License
