@@ -85,13 +85,13 @@ Below is the output from `git-summary`.
 
 ```
  project: itier-client
- commits: 111
- active : 33 days
+ commits: 114
  files  : 14
  authors: 
-    83  aleafs                  74.8%
-    20  fengmk2                 18.0%
-     8  Jackson Tian            7.2%
+    84	aleafs                  73.7%
+    22	fengmk2                 19.3%
+     8	Jackson Tian            7.0%
+
 ```
 
 ## License
@@ -118,3 +118,4 @@ IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
 CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
 TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
