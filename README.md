@@ -38,28 +38,6 @@ itier.status('lastdate', function(error, status) {
 });
 ```
 
-Use `agentkeepalive` on itier client:
-
-```bash
-# install agentkeepalive
-$ npm install agentkeepalive
-```
-
-```js
-var Agent = require('agentkeepalive');
-var keepaliveAgent = new Agent({
-  maxSockets: 100,
-  maxKeepAliveTime: 60000 // keepalive for 60 seconds
-});
-
-var itier = require('itier').createClient({
-  appname: 'appname',
-  password: 'password',
-  timeout: 5000, // 5 seconds
-  agent: keepaliveAgent
-});
-```
-
 # TODO
 
 * Query options support, such as "usecache" and "debug" [done];
