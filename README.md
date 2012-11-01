@@ -36,6 +36,36 @@ itier.query('SELECT * FROM table WHERE c1 = :c', {
 itier.status('lastdate', function(error, status) {
   console.log(status);
 });
+
+
+
+//how to use itier-client with iservice
+var itier = require('itier').createClient({
+  appname: 'appname',
+  password: 'password',
+  timeout: 5000, // 5 seconds
+});
+
+// connect iservice and connect itier
+var obj = itier.connectIservice({
+  host : '127.0.0.1:9999',
+  cache : __dirname + '/cache'
+});
+
+obj.on('ready', function () {
+  //do query
+  itier.query('SELECT * FROM table WHERE c1 = :c', { 
+    'c' : 1211 
+  }, function(error, data, header, profile) {
+    if (error) {
+      throw new Error(error);
+    }
+
+    // write to cache
+    cache.write(key, data, header.expire + now);
+  });
+});
+
 ```
 
 # TODO
