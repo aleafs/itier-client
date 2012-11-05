@@ -449,59 +449,14 @@ describe('itier-client-test', function () {
 /*{{{ itier-client-with-iservice-works-fine*/
 describe('itier-client-with-iservice-works-fine', function () {
   var client = null;
-
-  var servers = [];
+  var server;
 
   /*{{{ before */
   before(function (done) {
     var mockServer = function (callback) {
-      var count = 2;
-      
-      /*{{{ serverOne */
-      var serverOne = http.createServer(function (req, res) {
-        if (req.url === '/api/tree/' + encodeURIComponent('service_online/iservice')) {
-          res.end(JSON.stringify({
-            error : null,
-            data : {
-              '/service_online' : {
-                'data' : 1234,
-                'meta' : {'v' : 1, 't' : 2}
-              },
-              '/service_online/iservice' : {
-                'data' : 12345,
-                'meta' : {'v' : 1, 't' : 2}
-              },
-              '/service_online/iservice/1.0' : {
-                'data' : 123456,
-                'meta' : {'v' : 1, 't' : 2}
-              },
-              '/service_online/iservice/1.0/1' : {
-                'data' : JSON.stringify({
-                  host : '127.0.0.1',
-                  port : 23432
-                }),
-                'meta' : {'v' : 1, 't' : 2}
-              },
-            }
-          }));
-        } else if (req.url === '/api/watch/' + encodeURIComponent('service_online/iservice')){
-          res.end(JSON.stringify({
-            error : null,
-            data : null
-          }));
-        } else {
-          res.end('');
-        }
-      }).listen(56565, function () {
-        if (--count === 0) {
-          callback();
-        }
-      });
-      servers.push(serverOne);
-      /*}}}*/
 
-      /*{{{ serverTwo */
-      var serverTwo = http.createServer(function (req, res) {
+      /*{{{ server */
+      server = http.createServer(function (req, res) {
         if (req.url === '/api/tree/' + encodeURIComponent('service_online/itier')) {
           res.end(JSON.stringify({
             error : null,
@@ -555,11 +510,8 @@ describe('itier-client-with-iservice-works-fine', function () {
           res.end('');
         }
       }).listen(23432, function () {
-        if (--count === 0) {
-          callback();
-        }
+        callback();
       });
-      servers.push(serverTwo);
       /*}}}*/
 
     }
@@ -569,7 +521,7 @@ describe('itier-client-with-iservice-works-fine', function () {
         'appname' : 'test',
       });
       var obj = client.connectIservice({
-        host : '127.0.0.1:56565',
+        host : '127.0.0.1:23432',
         cache : __dirname + '/run',
         //用户使用时，不设置not_copy
         not_copy : true,
@@ -603,9 +555,7 @@ describe('itier-client-with-iservice-works-fine', function () {
 
   /*{{{ after */
   after(function (done) {
-    servers.forEach(function (server) {
-      server.close();
-    });
+    server.close();
     done();
   });
   /*}}}*/
