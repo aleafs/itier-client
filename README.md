@@ -47,6 +47,7 @@ var itier = require('itier').createClient({
 });
 
 // connect iservice and connect itier
+// if obj is null, you must have used connect api
 var obj = itier.connectIservice({
   host : '127.0.0.1:9999',
   cache : __dirname + '/cache'
