@@ -3,6 +3,8 @@
 var should  = require('should');
 var ITier   = require(__dirname + '/../');
 var pedding = require('./utils/pedding');
+var http    = require('http');
+var Iservice = require('iservice-client');
 
 /* {{{ mock itier service on 33750 */
 var HTTP    = require('http').createServer(function (req, res) {
@@ -158,6 +160,7 @@ var HTTP    = require('http').createServer(function (req, res) {
 }).listen(33750);
 /* }}} */
 
+/*{{{ itier-client-test */
 describe('itier-client-test', function () {
   var client = null;
   before(function () {
@@ -165,10 +168,6 @@ describe('itier-client-test', function () {
       'appname' : 'test',
     });
     client.connect('127.0.0.1', 33750);
-  });
-
-  after(function () {
-    HTTP.close();
   });
 
   /* {{{ should_select_data_from_itier_works_fine() */
@@ -446,3 +445,128 @@ describe('itier-client-test', function () {
     });
   });
 });
+/*}}}*/
+
+/*{{{ itier-client-with-iservice-works-fine*/
+describe('itier-client-with-iservice-works-fine', function () {
+  var client = null;
+  var server;
+
+  /*{{{ before */
+  before(function (done) {
+    var mockServer = function (callback) {
+
+      /*{{{ server */
+      server = http.createServer(function (req, res) {
+        if (req.url === '/api/tree/' + encodeURIComponent('service_online/itier')) {
+          res.end(JSON.stringify({
+            error : null,
+            data : {
+              '/service_online' : {
+                'data' : 1234,
+                'meta' : {'v' : 1, 't' : 2}
+              },
+              '/service_online/testService' : {
+                'data' : 12345,
+                'meta' : {'v' : 1, 't' : 2}
+              },
+              '/service_online/testService/1.0' : {
+                'data' : 123456,
+                'meta' : {'v' : 1, 't' : 2}
+              },
+              '/service_online/testService/1.0/1' : {
+                'data' : JSON.stringify({
+                  host : '127.0.0.1',
+                  port : 33750,
+                }),
+                'meta' : {'v' : 1, 't' : 2}
+              },
+            }
+          }));
+        } else if (req.url === '/api/tree/' + encodeURIComponent('config/configtest')){
+          res.end(JSON.stringify({
+            error : null,
+            data : {
+              '/config/configtest' : {
+                'data' : 1234,
+                'meta' : {'v' : 1, 't' : 2}
+              },
+              '/config/configtest/config1' : {
+                'data' : 'i am config',
+                'meta' : {'v' : 1, 't' : 2}
+              },
+            }
+          }));
+        } else if (req.url === '/api/watch/' + encodeURIComponent('config/configtest')){
+          res.end(JSON.stringify({
+            error : null,
+            data : null
+          }));
+        } else if (req.url === '/api/watch/' + encodeURIComponent('service_online/itier')){
+          res.end(JSON.stringify({
+            error : null,
+            data : null
+          }));
+        } else {
+          res.end('');
+        }
+      }).listen(23432, function () {
+        callback();
+      });
+      /*}}}*/
+
+    }
+
+    mockServer(function () {
+      client = ITier.createClient({
+        'appname' : 'test',
+      });
+      var obj = Iservice.init({
+        host : '127.0.0.1:23432',
+        cache : __dirname + '/run',
+        //用户使用时，不设置not_copy
+        not_copy : true,
+      }).createService().subscribe('itier');
+
+      obj.on('ready', function () {
+        client.useIservice(obj);
+        done();
+      });
+    });
+  
+  });
+  /*}}}*/
+
+  /*{{{ should_with_iservice_works_fine*/
+  it('should_with_iservice_works_fine', function (done) {
+    client.query('SELECT * FROM myfox.table_info', null, function (error, data, header, profile) {
+      data.should.eql([{'c1': 1, 'c2': 2}, {'c1': 3, 'c2': 4}]);
+      profile.should.eql([]);
+      header.should.eql({
+        'version'   : '1.0',
+        'status'    : 200,
+        'expire'    : -1,
+        'message'   : 'status ok',
+        'row_num'   : 2,
+        'column_num': 2,
+        host        : '127.0.0.1'
+      });
+      done();
+    });
+  });
+  /*}}}*/
+
+  /*{{{ after */
+  after(function (done) {
+    server.close();
+    done();
+  });
+  /*}}}*/
+
+});
+/*}}}*/
+
+after(function () {
+  HTTP.close();
+});
+

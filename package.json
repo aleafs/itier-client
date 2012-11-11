@@ -1,6 +1,6 @@
 {
   "name": "itier",
-  "version": "0.1.8",
+  "version": "0.1.9",
   "author": "Aleafs Zhang (zhangxc83@gmail.com)",
   "contributors": [
     "Aleafs Zhang <zhangxc83@gmail.com>",
@@ -20,6 +20,7 @@
   },
   "main": "./index.js",
   "devDependencies": {
+    "iservice-client": "=0.0.18",
     "should": ">=0.4.2",
     "mocha": ">=0.9.0",
     "visionmedia-jscoverage": "*"
