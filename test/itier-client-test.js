@@ -4,6 +4,7 @@ var should  = require('should');
 var ITier   = require(__dirname + '/../');
 var pedding = require('./utils/pedding');
 var http    = require('http');
+var Iservice = require('iservice-client');
 
 /* {{{ mock itier service on 33750 */
 var HTTP    = require('http').createServer(function (req, res) {
@@ -520,13 +521,15 @@ describe('itier-client-with-iservice-works-fine', function () {
       client = ITier.createClient({
         'appname' : 'test',
       });
-      var obj = client.connectIservice({
+      var obj = Iservice.init({
         host : '127.0.0.1:23432',
         cache : __dirname + '/run',
         //用户使用时，不设置not_copy
         not_copy : true,
-      });
+      }).createService().subscribe('itier');
+
       obj.on('ready', function () {
+        client.useIservice(obj);
         done();
       });
     });
