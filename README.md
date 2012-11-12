@@ -36,6 +36,40 @@ itier.query('SELECT * FROM table WHERE c1 = :c', {
 itier.status('lastdate', function(error, status) {
   console.log(status);
 });
+
+
+
+//how to use itier-client with iservice
+var itier = require('itier').createClient({
+  appname: 'appname',
+  password: 'password',
+  timeout: 5000, // 5 seconds
+});
+
+//use iservice to create a service obj
+var itierObj = require('iservice-client').init({
+  host : '127.0.0.1:12345', //iservice address
+  cache : __dirname + '/run', //iservice cache address
+}).createService().subscribe('itier');
+
+// when ready event is emitted, add iservice object into itier client.
+// then do anything you want
+itierObj.on('ready', function () {
+  itier.useIservice(itierObj);
+
+  //do query
+  itier.query('SELECT * FROM table WHERE c1 = :c', { 
+    'c' : 1211 
+  }, function(error, data, header, profile) {
+    if (error) {
+      throw new Error(error);
+    }
+
+    // write to cache
+    cache.write(key, data, header.expire + now);
+  });
+});
+
 ```
 
 # TODO
