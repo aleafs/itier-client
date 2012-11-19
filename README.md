@@ -1,18 +1,16 @@
 [![Build Status](https://secure.travis-ci.org/aleafs/itier-client.png)](http://travis-ci.org/aleafs/itier-client)
 
-# About
-
 itier-client is a client library for [ITier](https://github.com/xianbei/itier).
 
-# Install
+## Install
     
 ```bash
 $ npm install itier
 ```
 
-# Usage
+## Usage
 
-```javascript
+```js
 var itier = require('itier').createClient({
   appname: 'appname',
   password: 'password',
@@ -24,7 +22,7 @@ itier.connect('127.0.0.1', 9999).connect('127.0.0.2');
 
 itier.query('SELECT * FROM table WHERE c1 = :c', { 
   'c' : 1211 
-}, function(error, data, header, profile) {
+}, function (error, data, header, profile) {
   if (error) {
     throw new Error(error);
   }
@@ -33,29 +31,30 @@ itier.query('SELECT * FROM table WHERE c1 = :c', {
   cache.write(key, data, header.expire + now);
 });
 
-itier.status('lastdate', function(error, status) {
+itier.status('lastdate', function (error, status) {
   console.log(status);
 });
+```
 
+### how to use itier-client with iservice
 
-
-//how to use itier-client with iservice
+```js
 var itier = require('itier').createClient({
   appname: 'appname',
   password: 'password',
   timeout: 5000, // 5 seconds
 });
 
-//use iservice to create a service obj
-var itierObj = require('iservice-client').init({
+// use iservice to create a service obj
+var configClient = require('iservice-client').init({
   host : '127.0.0.1:12345', //iservice address
   cache : __dirname + '/run', //iservice cache address
 }).createService().subscribe('itier');
 
 // when ready event is emitted, add iservice object into itier client.
 // then do anything you want
-itierObj.on('ready', function () {
-  itier.useIservice(itierObj);
+configClient.on('ready', function () {
+  itier.useIservice(configClient);
 
   //do query
   itier.query('SELECT * FROM table WHERE c1 = :c', { 
@@ -69,15 +68,14 @@ itierObj.on('ready', function () {
     cache.write(key, data, header.expire + now);
   });
 });
-
 ```
 
-# TODO
+## TODO
 
 * Query options support, such as "usecache" and "debug" [done];
 * Get itier service status and hosts list from config-server;
 
-# TEST
+## TEST
 
 unit test
 
@@ -85,25 +83,29 @@ unit test
 $ make test
 ```
 
-jscoverage: [*92%*](http://fengmk2.github.com/coverage/itier.html)
+* jscoverage: [*92%*](http://fengmk2.github.com/coverage/itier.html)
 
 ```bash
 $ make test-cov
 ```
 
-# Authors
+## Authors
 
 Below is the output from `git-summary`.
 
-```
- project: itier-client
- commits: 114
- files  : 14
- authors: 
-    84	aleafs                  73.7%
-    22	fengmk2                 19.3%
-     8	Jackson Tian            7.0%
+```bash
+$ git summary 
 
+ project  : itier-client
+ repo age : 9 months
+ active   : 57 days
+ commits  : 151
+ files    : 13
+ authors  : 
+   102  aleafs                  67.5%
+    30  fengmk2                 19.9%
+    11  Jackson Tian            7.3%
+     8  弈轩                  5.3%
 ```
 
 ## License
@@ -130,4 +132,3 @@ IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
 CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
 TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-

@@ -13,7 +13,7 @@
     "client"
   ],
   "dependencies": {
-    "agentkeepalive": "=0.1.4"
+    "agentkeepalive": "0.1.5"
   },
   "engines": {
     "node": ">=0.6.6"
@@ -23,7 +23,8 @@
     "iservice-client": "=0.0.18",
     "should": ">=0.4.2",
     "mocha": ">=0.9.0",
-    "visionmedia-jscoverage": "*"
+    "pedding": "*",
+    "jscover": "*"
   },
   "scripts": {
     "test": "make test"
