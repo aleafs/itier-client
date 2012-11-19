@@ -2,7 +2,7 @@
 
 var should  = require('should');
 var ITier   = require(__dirname + '/../');
-var pedding = require('./utils/pedding');
+var pedding = require('pedding');
 var http    = require('http');
 var Iservice = require('iservice-client');
 
@@ -53,10 +53,6 @@ var HTTP    = require('http').createServer(function (req, res) {
   });
   req.on('end', function () {
     var error, ret;
-    if (data.indexOf('hbase.t404') > 0) {
-      var hbase404 = '{"v":"1.0","c":400,"m":"hbase status code error: 404","t":0,"n":0,"fn":0,"f":[],"d":[]}';
-      return res.end(hbase404);
-    }
 
     if (data.indexOf('objectErrorMessage') > 0) {
       error = '{"v":"1.0","c":400,"m":{},"t":0,"n":0,"fn":0,"f":[],"d":[]}';
@@ -78,6 +74,21 @@ var HTTP    = require('http').createServer(function (req, res) {
       return res.end(error);
     }
 
+    if (data.indexOf('mock.myfox.error') > 0) {
+      error = '{"v":"1.0","c":500,"m":"Error: DataSource : myfox, RequestTimeout","t":0,"n":0,"fn":0,"f":[],"d":[]}';
+      return res.end(error);
+    }
+
+    if (data.indexOf('mock.datasource.error') > 0) {
+      error = '{"v":"1.0","c":500,"m":"Error: DataSource : foo_123, RequestTimeout","t":0,"n":0,"fn":0,"f":[],"d":[]}';
+      return res.end(error);
+    }
+
+    if (data.indexOf('mock.auction.error') > 0) {
+      error = '{"v":"1.0","c":500,"m":"Error: DataSource : auction, RequestTimeout","t":0,"n":0,"fn":0,"f":[],"d":[]}';
+      return res.end(error);
+    }
+
     if (data.indexOf('error.message') > 0) {
       error = '{"v":"1.0","c":500,"m":"OTSMetaNotMatch : Primary key from request not match with the schema","t":0,"n":0,"fn":0,"f":[],"d":[]}';
       return res.end(error);
@@ -85,6 +96,14 @@ var HTTP    = require('http').createServer(function (req, res) {
 
     if (data.indexOf('SomeServerError.message') > 0) {
       error = '{"v":"1.0","c":500,"m":"SomeServerError : some backend server down","t":0,"n":0,"fn":0,"f":[],"d":[]}';
+      return res.end(error);
+    }
+
+    if (data.indexOf('error.nohostlist3') > 0) {
+      error = '{"v":"1.0","c":500,"m":"Error: No Checked OK Hosts Now","t":0,"n":0,"fn":0,"f":[],"d":[]}';
+      res.writeHead(500, {
+        'x-itier-realhost': '127.0.0.1'
+      });
       return res.end(error);
     }
 
@@ -219,16 +238,6 @@ describe('itier-client-test', function () {
   });
   /* }}} */
 
-  /* {{{ should_return_[]_when_hbase_404() */
-  it('should return [] when hbase 404', function (done) {
-    client.query('select * from hbase.t404 where row = :r', {r: 123}, function (err, rows) {
-      should.not.exist(err);
-      rows.should.length(0);
-      done();
-    });
-  });
-  /* }}} */
-
   /* {{{ should_error_message_tobe_{}_not_object() */
   it('error.message should be {} not [object Object]', function (done) {
     client.query('select * from objectErrorMessage', null, function (err, rows) {
@@ -242,16 +251,46 @@ describe('itier-client-test', function () {
   /* }}} */
 
   /* {{{ should_mock_error_message() */
-  it('error.message should be {} not [object Object]', function (done) {
+  it('error.message should return mock error', function (done) {
     client.query('select * from mock.error', null, function (err, rows, msg) {
       should.exist(err);
-      err.message.should.equal('Error: Query error #2003: Can\'t connect to MySQL server on \'10.232.132.78\' (4)');
+      err.message.should.equal('Query error #2003: Can\'t connect to MySQL server on \'10.232.132.78\' (4)');
       err.name.should.equal('ITierError');
       should.not.exist(rows);
       done();
     });
   });
   /* }}} */
+
+  it('error.message should return mock myfox error', function (done) {
+    client.query('select * from mock.myfox.error', null, function (err, rows, msg) {
+      should.exist(err);
+      err.message.should.equal('DataSource : myfox, RequestTimeout');
+      err.name.should.equal('MyfoxError');
+      should.not.exist(rows);
+      done();
+    });
+  });
+
+  it('error.message should return mock auction error', function (done) {
+    client.query('select * from mock.auction.error', null, function (err, rows, msg) {
+      should.exist(err);
+      err.message.should.equal('DataSource : auction, RequestTimeout');
+      err.name.should.equal('AuctionError');
+      should.not.exist(rows);
+      done();
+    });
+  });
+
+  it('error.message should return mock datasource error', function (done) {
+    client.query('select * from mock.datasource.error', null, function (err, rows, msg) {
+      should.exist(err);
+      err.message.should.equal('DataSource : foo_123, RequestTimeout');
+      err.name.should.equal('Foo_123Error');
+      should.not.exist(rows);
+      done();
+    });
+  });
 
   /* {{{ should_set_x-itier-expire_success() */
   it("should set `'x-itier-expire'` success", function (done) {
@@ -378,7 +417,7 @@ describe('itier-client-test', function () {
   });
 
   it('should return NoAvailableServerError', function (done) {
-    done = pedding(2, done);
+    done = pedding(3, done);
     client.query('select * from error.nohostlist1', null, function (err, data) {
       should.exist(err);
       err.should.have.property('name', 'NoAvailableServerError');
@@ -391,6 +430,14 @@ describe('itier-client-test', function () {
       should.exist(err);
       err.should.have.property('name', 'NoAvailableServerError');
       err.should.have.property('message', 'no available host list for :ots');
+      err.should.have.property('host', '127.0.0.1');
+      should.not.exist(data);
+      done();
+    });
+    client.query('select * from error.nohostlist3', null, function (err, data) {
+      should.exist(err);
+      err.should.have.property('name', 'NoAvailableServerError');
+      err.should.have.property('message', 'No Checked OK Hosts Now');
       err.should.have.property('host', '127.0.0.1');
       should.not.exist(data);
       done();
@@ -483,7 +530,7 @@ describe('itier-client-with-iservice-works-fine', function () {
               },
             }
           }));
-        } else if (req.url === '/api/tree/' + encodeURIComponent('config/configtest')){
+        } else if (req.url === '/api/tree/' + encodeURIComponent('config/configtest')) {
           res.end(JSON.stringify({
             error : null,
             data : {
@@ -497,12 +544,12 @@ describe('itier-client-with-iservice-works-fine', function () {
               },
             }
           }));
-        } else if (req.url === '/api/watch/' + encodeURIComponent('config/configtest')){
+        } else if (req.url === '/api/watch/' + encodeURIComponent('config/configtest')) {
           res.end(JSON.stringify({
             error : null,
             data : null
           }));
-        } else if (req.url === '/api/watch/' + encodeURIComponent('service_online/itier')){
+        } else if (req.url === '/api/watch/' + encodeURIComponent('service_online/itier')) {
           res.end(JSON.stringify({
             error : null,
             data : null
@@ -515,7 +562,7 @@ describe('itier-client-with-iservice-works-fine', function () {
       });
       /*}}}*/
 
-    }
+    };
 
     mockServer(function () {
       client = ITier.createClient({
