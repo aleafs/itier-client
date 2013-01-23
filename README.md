@@ -96,16 +96,15 @@ Below is the output from `git-summary`.
 ```bash
 $ git summary 
 
- project  : itier-client
- repo age : 9 months
- active   : 57 days
- commits  : 151
- files    : 13
- authors  : 
-   102  aleafs                  67.5%
-    30  fengmk2                 19.9%
-    11  Jackson Tian            7.3%
-     8  弈轩                  5.3%
+project: itier-client
+commits: 157
+files  : 13
+authors: 
+105    aleafs                  66.9%
+ 33    fengmk2                 21.0%
+ 11    Jackson Tian            7.0%
+  8    弈轩                  5.1%
+
 ```
 
 ## License
