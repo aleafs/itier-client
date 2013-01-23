@@ -79,6 +79,11 @@ var HTTP    = require('http').createServer(function (req, res) {
       return res.end(error);
     }
 
+    if (data.indexOf('mock.myfox.queueerror') > 0) {
+      error = '{"v":"1.0","c":500,"m":"Error: DataSource : myfox, queueTimeout: Query stays in the queue more than 20000 ms (magicdata_read@172.23.112.11:3306)","t":0,"n":0,"fn":0,"f":[],"d":[]}';
+      return res.end(error);
+    }
+
     if (data.indexOf('mock.datasource.error') > 0) {
       error = '{"v":"1.0","c":500,"m":"Error: DataSource : foo_123, RequestTimeout","t":0,"n":0,"fn":0,"f":[],"d":[]}';
       return res.end(error);
@@ -266,7 +271,17 @@ describe('itier-client-test', function () {
     client.query('select * from mock.myfox.error', null, function (err, rows, msg) {
       should.exist(err);
       err.message.should.equal('DataSource : myfox, RequestTimeout');
-      err.name.should.equal('MyfoxError');
+      err.name.should.equal('MyfoxRequestTimeoutError');
+      should.not.exist(rows);
+      done();
+    });
+  });
+
+  it('error.message should return mock myfox queueerror', function (done) {
+    client.query('select * from mock.myfox.queueerror', null, function (err, rows, msg) {
+      should.exist(err);
+      err.message.should.equal('DataSource : myfox, queueTimeout: Query stays in the queue more than 20000 ms (magicdata_read@172.23.112.11:3306)');
+      err.name.should.equal('MyfoxQueueTimeoutError');
       should.not.exist(rows);
       done();
     });
@@ -276,7 +291,7 @@ describe('itier-client-test', function () {
     client.query('select * from mock.auction.error', null, function (err, rows, msg) {
       should.exist(err);
       err.message.should.equal('DataSource : auction, RequestTimeout');
-      err.name.should.equal('AuctionError');
+      err.name.should.equal('AuctionRequestTimeoutError');
       should.not.exist(rows);
       done();
     });
@@ -286,7 +301,7 @@ describe('itier-client-test', function () {
     client.query('select * from mock.datasource.error', null, function (err, rows, msg) {
       should.exist(err);
       err.message.should.equal('DataSource : foo_123, RequestTimeout');
-      err.name.should.equal('Foo_123Error');
+      err.name.should.equal('Foo_123RequestTimeoutError');
       should.not.exist(rows);
       done();
     });
@@ -473,7 +488,7 @@ describe('itier-client-test', function () {
     client.query('select * from RequestTimeout', null, function (err, data) {
       client.client.options.timeout = cacheTimeout;
       should.exist(err);
-      err.should.have.property('name', 'RequestTimeoutError');
+      err.should.have.property('name', 'ITierClientRequestTimeoutError');
       err.should.have.property('message');
       err.message.should.include('Request Timeout after 210ms');
       should.not.exist(data);
@@ -484,7 +499,7 @@ describe('itier-client-test', function () {
   it('should return RequestError', function (done) {
     client.query('select * from SocketError', null, function (err, data) {
       should.exist(err);
-      err.should.have.property('name', 'RequestError');
+      err.should.have.property('name', 'ITierClientRequestError');
       err.should.have.property('message');
       err.message.should.include('socket hang up');
       should.not.exist(data);
