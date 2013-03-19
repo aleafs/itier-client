@@ -12,7 +12,7 @@ function inspect(obj) {
   console.log(require('util').inspect(obj, false, 10));  
 }
 
-describe('irequest test', function() {
+describe('irequest-test', function() {
   before(function(done){
     var count = 0;
     var server = http.createServer(function(req, res) {
