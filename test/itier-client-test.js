@@ -28,6 +28,12 @@ var HTTP    = require('http').createServer(function (req, res) {
     return;
   }
 
+  if (req.url.indexOf('/status/mockerror') > -1) {
+    res.statusCode = 500;
+    res.end("Error: No Checked OK Hosts Now");
+    return;
+  }
+
   if (req.url.indexOf('/status/') > -1) {
     res.end("key1\tval1\nkey2val2");
     return;
@@ -388,6 +394,17 @@ describe('itier-client-test', function () {
     });
   });
   /* }}} */
+
+  it('should_itier_status_error_return_error', function (done) {
+    client.status('mockerror', function (error, data) {
+      should.exist(error);
+      error.name.should.equal('ITierStatusError');
+      error.message.should.equal('code 500, Error: No Checked OK Hosts Now');
+      error.url.should.equal('/status/mockerror');
+      should.not.exists(data);
+      done();
+    });
+  });
 
   /* {{{ should_itier_explain_works_fine() */
   it('should_itier_explain_works_fine', function (done) {

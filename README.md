@@ -111,7 +111,7 @@ authors:
 
 (The MIT License)
 
-Copyright &copy; 2012 aleafs <zhangxc83@gmail.com>
+Copyright &copy; 2012 - 2013 aleafs <zhangxc83@gmail.com>
 
 Permission is hereby granted, free of charge, to any person obtaining
 a copy of this software and associated documentation files (the
